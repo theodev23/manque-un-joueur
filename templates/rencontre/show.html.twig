@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ rencontre.titre }} — Il nous manque un joueur{% endblock %}
+
+{% block body %}
+    <h1>{{ rencontre.titre }}</h1>
+
+    <p>Organisée par {{ rencontre.organisateur.pseudo }}</p>
+    <p>Ville : {{ rencontre.ville }}</p>
+    <p>Lieu : {{ rencontre.lieu }}</p>
+    <p>Le {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }} — heure de Paris</p>
+    <p>Joueurs recherchés : {{ rencontre.placesRecherchees }}</p>
+
+    {% if rencontre.description %}
+        <h2>Informations complémentaires</h2>
+        <p>{{ rencontre.description }}</p>
+    {% endif %}
+
+    <p><a href="{{ path('app_rencontre') }}">Retour aux rencontres</a></p>
+{% endblock %}

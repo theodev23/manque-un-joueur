@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
@@ -39,6 +41,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(length: 50)]
     private ?string $pseudo = null;
+
+    /**
+     * @var Collection<int, Rencontre>
+     */
+    // mappedBy: 'organisateur' : indique que la relation est portée par la propriété organisateur de Rencontre
+    #[ORM\OneToMany(targetEntity: Rencontre::class, mappedBy: 'organisateur')]
+    private Collection $rencontresOrganisees;
+
+    public function __construct()
+    {
+        $this->rencontresOrganisees = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -130,6 +144,37 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPseudo(string $pseudo): static
     {
         $this->pseudo = $pseudo;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Rencontre>
+     */
+    public function getRencontresOrganisees(): Collection
+    {
+        return $this->rencontresOrganisees;
+    }
+
+    // La méthode d’ajout met à jour les deux côtés en mémoire
+    public function addRencontresOrganisee(Rencontre $rencontresOrganisee): static
+    {
+        if (!$this->rencontresOrganisees->contains($rencontresOrganisee)) {
+            $this->rencontresOrganisees->add($rencontresOrganisee);
+            $rencontresOrganisee->setOrganisateur($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRencontresOrganisee(Rencontre $rencontresOrganisee): static
+    {
+        if ($this->rencontresOrganisees->removeElement($rencontresOrganisee)) {
+            // set the owning side to null (unless already changed)
+            if ($rencontresOrganisee->getOrganisateur() === $this) {
+                $rencontresOrganisee->setOrganisateur(null);
+            }
+        }
 
         return $this;
     }

@@ -1,0 +1,146 @@
+<?php
+
+namespace App\Entity;
+
+use App\Repository\RencontreRepository;
+use Doctrine\DBAL\Types\Types;
+use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+
+#[ORM\Entity(repositoryClass: RencontreRepository::class)]
+class Rencontre
+{
+    // Les attributs ORM décrivent le stockage. Les attributs Assert définissent les règles vérifiées par le validateur Symfony, notamment lorsque nous appellerons $form->isValid().
+
+
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
+    #[ORM\Column(length: 120)]
+    private ?string $titre = null;
+
+    #[ORM\Column(length: 100)]
+    private ?string $ville = null;
+
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Veuillez préciser le lieu.')]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: 'Le lieu ne doit pas dépasser {{ limit }} caractères.'
+    )]
+    private ?string $lieu = null;
+
+    // datetime_immutable représente une date et une heure avec un objet PHP DateTimeImmutable. Modifier cette date produit un nouvel objet.
+    #[ORM\Column]
+    #[Assert\NotNull(message: 'Veuillez renseigner la date et l’heure.')]
+    // Assert\GreaterThan vérifie que la date est supérieure à la date actuelle (now).
+    #[Assert\GreaterThan(
+        value: 'now',
+        message: 'La rencontre doit avoir lieu dans le futur.'
+    )]
+    private ?\DateTimeImmutable $dateHeure = null;
+
+    #[ORM\Column]
+    #[Assert\NotNull(message: 'Veuillez indiquer le nombre de places recherchées.')]
+    #[Assert\Positive(message: 'Le nombre de places doit être supérieur à zéro.')]
+    private ?int $placesRecherchees = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
+
+    // inversedBy: 'rencontresOrganisees' : indique le nom de la propriété correspondante dans User
+    #[ORM\ManyToOne(inversedBy: 'rencontresOrganisees')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $organisateur = null;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getTitre(): ?string
+    {
+        return $this->titre;
+    }
+
+    public function setTitre(string $titre): static
+    {
+        $this->titre = $titre;
+
+        return $this;
+    }
+
+    public function getVille(): ?string
+    {
+        return $this->ville;
+    }
+
+    public function setVille(string $ville): static
+    {
+        $this->ville = $ville;
+
+        return $this;
+    }
+
+    public function getLieu(): ?string
+    {
+        return $this->lieu;
+    }
+
+    public function setLieu(string $lieu): static
+    {
+        $this->lieu = $lieu;
+
+        return $this;
+    }
+
+    public function getDateHeure(): ?\DateTimeImmutable
+    {
+        return $this->dateHeure;
+    }
+
+    public function setDateHeure(\DateTimeImmutable $dateHeure): static
+    {
+        $this->dateHeure = $dateHeure;
+
+        return $this;
+    }
+
+    public function getPlacesRecherchees(): ?int
+    {
+        return $this->placesRecherchees;
+    }
+
+    public function setPlacesRecherchees(int $placesRecherchees): static
+    {
+        $this->placesRecherchees = $placesRecherchees;
+
+        return $this;
+    }
+
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    public function setDescription(?string $description): static
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    public function getOrganisateur(): ?User
+    {
+        return $this->organisateur;
+    }
+
+    public function setOrganisateur(?User $organisateur): static
+    {
+        $this->organisateur = $organisateur;
+
+        return $this;
+    }
+}

@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Rencontres à venir — Il nous manque un joueur{% endblock %}
+
+{% block body %}
+    <h1>Rencontres à venir</h1>
+
+    <p><a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a></p>
+    <p>Les horaires sont affichés à l’heure de Paris.</p>
+
+    {% for rencontre in rencontres %}
+        <article>
+            <h2><a href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">{{ rencontre.titre }}</a></h2>
+            <p>{{ rencontre.ville }} — {{ rencontre.lieu }}</p>
+            <p>Le {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+            <p>Joueurs recherchés : {{ rencontre.placesRecherchees }}</p>
+
+            {% if rencontre.description %}
+                <p>{{ rencontre.description }}</p>
+            {% endif %}
+        </article>
+    {% else %}
+        <p>Aucune rencontre à venir pour le moment.</p>
+    {% endfor %}
+{% endblock %}
