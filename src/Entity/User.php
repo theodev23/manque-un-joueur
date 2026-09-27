@@ -4,12 +4,14 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 // Cet attribut indique que Doctrine doit associer cette classe à une table de la base.
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
 // UserInterface permet à Symfony d’obtenir l’identifiant de connexion et les rôles de l’utilisateur.
 // PasswordAuthenticatedUserInterface indique que l’utilisateur possède un mot de passe accessible par getPassword()
 class User implements UserInterface, PasswordAuthenticatedUserInterface
