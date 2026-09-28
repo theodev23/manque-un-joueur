@@ -4,16 +4,86 @@
 
 {% block body %}
     <h1>{{ rencontre.titre }}</h1>
+    {% for message in app.flashes('success') %}
+        <p role="status">{{ message }}</p>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <p role="alert">{{ message }}</p>
+    {% endfor %}
 
     <p>Organisée par {{ rencontre.organisateur.pseudo }}</p>
     <p>Ville : {{ rencontre.ville }}</p>
     <p>Lieu : {{ rencontre.lieu }}</p>
     <p>Le {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }} — heure de Paris</p>
-    <p>Joueurs recherchés : {{ rencontre.placesRecherchees }}</p>
+    <p>Places restantes : {{ rencontre.placesRestantes }} sur {{ rencontre.placesRecherchees }}</p>
 
     {% if rencontre.description %}
         <h2>Informations complémentaires</h2>
         <p>{{ rencontre.description }}</p>
+    {% endif %}
+
+    {% if app.user and app.user.id == rencontre.organisateur.id %}
+        <p>Vous êtes l’organisateur de cette rencontre.</p>
+
+    {% elseif participation %}
+        {% if participation.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
+            <p>Votre demande est en attente de réponse.</p>
+        {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_ACCEPTEE') %}
+            <p>Votre demande a été acceptée.</p>
+        {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_REFUSEE') %}
+            <p>Votre demande a été refusée.</p>
+        {% endif %}
+
+    {% elseif not inscriptionsOuvertes %}
+        <p>Les inscriptions sont fermées : cette rencontre a déjà commencé.</p>
+    
+    {% elseif rencontre.placesRestantes <= 0 %}
+        <p>Cette rencontre est complète.</p>
+
+    {% elseif app.user %}
+        <form method="post" action="{{ path('app_rencontre_participer', {id: rencontre.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('participer_' ~ rencontre.id) }}">
+            <button type="submit">Demander à participer</button>
+        </form>
+
+    {% else %}
+        <p><a href="{{ path('app_login') }}">Connectez-vous pour demander à participer.</a></p>
+    {% endif %}
+
+    {% if app.user and app.user.id == rencontre.organisateur.id %}
+        <h2>Demandes de participation</h2>
+
+        {% for demande in demandes %}
+            <article>
+                <h3>{{ demande.utilisateur.pseudo }}</h3>
+                <p>Demande envoyée le {{ demande.dateDemande|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+
+                {% if demande.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
+                    <p>Statut : en attente</p>
+                    {% if inscriptionsOuvertes %}
+                        {% if rencontre.placesRestantes > 0 %}
+                            <form method="post" action="{{ path('app_participation_accepter', {id: demande.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('accepter_' ~ demande.id) }}">
+                                <button type="submit">Accepter</button>
+                            </form>
+                        {% else %}
+                            <p>La rencontre est complète.</p>
+                        {% endif %}
+                        <form method="post" action="{{ path('app_participation_refuser', {id: demande.id}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('refuser_' ~ demande.id) }}">
+                            <button type="submit">Refuser</button>
+                        </form>
+                    {% endif %}
+                {% elseif demande.statut == constant('App\\Entity\\Participation::STATUT_ACCEPTEE') %}
+                    <p>Statut : acceptée</p>
+                {% elseif demande.statut == constant('App\\Entity\\Participation::STATUT_REFUSEE') %}
+                    <p>Statut : refusée</p>
+                {% endif %}
+            </article>
+        {% else %}
+            <p>Aucune demande pour le moment.</p>
+        {% endfor %}
     {% endif %}
 
     <p><a href="{{ path('app_rencontre') }}">Retour aux rencontres</a></p>

@@ -13,6 +13,9 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use App\Repository\RencontreRepository;
+use App\Entity\Participation;
+use App\Repository\ParticipationRepository;
+use Doctrine\DBAL\LockMode;
 
 final class RencontreController extends AbstractController
 {
@@ -51,7 +54,7 @@ final class RencontreController extends AbstractController
     }
 
     #[Route('/rencontre/{id}', name: 'app_rencontre_show', requirements: ['id' => '\d+'], methods: ['GET'])]
-    public function afficher(int $id, RencontreRepository $rencontreRepository): Response
+    public function afficher(int $id, RencontreRepository $rencontreRepository, ParticipationRepository $participationRepository, #[CurrentUser] ?User $user): Response
     {
         $rencontre = $rencontreRepository->find($id);
 
@@ -59,8 +62,167 @@ final class RencontreController extends AbstractController
             throw $this->createNotFoundException('Cette rencontre n’existe pas.');
         }
 
+        $participation = null;
+
+        if ($user !== null) {
+            $participation = $participationRepository->findOneBy(['utilisateur' => $user, 'rencontre' => $rencontre]);
+        }
+
+        $inscriptionsOuvertes = $rencontre->getDateHeure() > new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        $demandes = [];
+
+        if ($user !== null && $rencontre->getOrganisateur()->getId() === $user->getId()) {
+            $demandes = $participationRepository->findBy(['rencontre' => $rencontre], ['dateDemande' => 'ASC']);
+        }
+
         return $this->render('rencontre/show.html.twig', [
             'rencontre' => $rencontre,
+            'participation' => $participation,
+            'inscriptionsOuvertes' => $inscriptionsOuvertes,
+            'demandes' => $demandes,
         ]);
+    }
+
+    #[Route('/rencontre/{id}/participer', name: 'app_rencontre_participer', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function participer(int $id, Request $request, RencontreRepository $rencontreRepository, ParticipationRepository $participationRepository, EntityManagerInterface $entityManager, #[CurrentUser] User $user): Response
+    {
+        $rencontre = $rencontreRepository->find($id);
+
+        if ($rencontre === null) {
+            throw $this->createNotFoundException('Cette rencontre n’existe pas.');
+        }
+
+        // Vérifie le jeton de protection transmis par le formulaire
+        if (!$this->isCsrfTokenValid('participer_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le formulaire est invalide.');
+        }
+
+        if ($rencontre->getOrganisateur()->getId() === $user->getId()) {
+            throw $this->createAccessDeniedException('Vous organisez déjà cette rencontre.');
+        }
+
+        // addFlash() prépare un message temporaire à afficher après la redirection
+        if ($rencontre->getDateHeure() <= new \DateTimeImmutable('now', new \DateTimeZone('UTC'))) {
+            $this->addFlash('error', 'Cette rencontre a déjà commencé.');
+
+            return $this->redirectToRoute('app_rencontre_show', ['id' => $id]);
+        }
+
+        $participationExistante = $participationRepository->findOneBy(['utilisateur' => $user, 'rencontre' => $rencontre]);
+
+        if ($participationExistante !== null) {
+            $this->addFlash('error', 'Vous avez déjà envoyé une demande pour cette rencontre.');
+
+            return $this->redirectToRoute('app_rencontre_show', ['id' => $id]);
+        }
+
+        if ($rencontre->getPlacesRestantes() <= 0) {
+            $this->addFlash('error', 'Cette rencontre est complète. Vous ne pouvez plus envoyer de demande.');
+
+            return $this->redirectToRoute('app_rencontre_show', ['id' => $id]);
+        }
+
+        $participation = new Participation();
+        $participation->setUtilisateur($user);
+        $participation->setRencontre($rencontre);
+
+        $entityManager->persist($participation);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Votre demande de participation a été envoyée.');
+
+        return $this->redirectToRoute('app_rencontre_show', ['id' => $id]);
+    }
+
+    #[Route('/participation/{id}/refuser', name: 'app_participation_refuser', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function refuser(int $id, Request $request, ParticipationRepository $participationRepository, EntityManagerInterface $entityManager, #[CurrentUser] User $user): Response
+    {
+        $participation = $participationRepository->find($id);
+
+        if ($participation === null) {
+            throw $this->createNotFoundException('Cette demande n’existe pas.');
+        }
+
+        $rencontre = $participation->getRencontre();
+
+        if ($rencontre->getOrganisateur()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException('Seul l’organisateur peut traiter cette demande.');
+        }
+
+        if (!$this->isCsrfTokenValid('refuser_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le formulaire est invalide.');
+        }
+
+        if ($rencontre->getDateHeure() <= new \DateTimeImmutable('now', new \DateTimeZone('UTC'))) {
+            $this->addFlash('error', 'Cette rencontre a déjà commencé.');
+        } elseif ($participation->getStatut() !== Participation::STATUT_EN_ATTENTE) {
+            $this->addFlash('error', 'Cette demande a déjà été traitée.');
+        } else {
+            $participation->setStatut(Participation::STATUT_REFUSEE);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'La demande a été refusée.');
+        }
+
+        return $this->redirectToRoute('app_rencontre_show', ['id' => $rencontre->getId()]);
+    }
+
+    #[Route('/participation/{id}/accepter', name: 'app_participation_accepter', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function accepter(int $id, Request $request, ParticipationRepository $participationRepository, EntityManagerInterface $entityManager, #[CurrentUser] User $user): Response
+    {
+        $participation = $participationRepository->find($id);
+
+        if ($participation === null) {
+            throw $this->createNotFoundException('Cette demande n’existe pas.');
+        }
+
+        $rencontre = $participation->getRencontre();
+
+        if ($rencontre->getOrganisateur()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException('Seul l’organisateur peut traiter cette demande.');
+        }
+
+        if (!$this->isCsrfTokenValid('accepter_' . $id, $request->request->get('_token'))) {
+            throw $this->createAccessDeniedException('Le formulaire est invalide.');
+        }
+
+        // Le code ci-dessous protège le cas où deux acceptations arrivent presque simultanément pour la dernière place.
+        // Le verrou sur la rencontre oblige une autre exécution de cette méthode pour la même rencontre à attendre avant de vérifier les places. Doctrine fournit ces mécanismes pour gérer les opérations concurrentes.
+        // wrapInTransaction regroupe les opérations dans une transaction et appelle automatiquement flush() avant de la valider
+        // refresh(..., LockMode::PESSIMISTIC_WRITE) relit les données et les verrouille jusqu’à la fin de la transaction
+        // function () use (...) définit une fonction anonyme qui peut utiliser les variables indiquées
+        $erreur = $entityManager->wrapInTransaction(function () use ($entityManager, $rencontre, $participation): ?string {
+            $entityManager->refresh($rencontre, LockMode::PESSIMISTIC_WRITE);
+            $entityManager->refresh($participation, LockMode::PESSIMISTIC_WRITE);
+
+            if ($rencontre->getDateHeure() <= new \DateTimeImmutable('now', new \DateTimeZone('UTC'))) {
+                return 'Cette rencontre a déjà commencé.';
+            }
+
+            if ($participation->getStatut() !== Participation::STATUT_EN_ATTENTE) {
+                return 'Cette demande a déjà été traitée.';
+            }
+
+            if ($rencontre->getPlacesRestantes() <= 0) {
+                return 'Cette rencontre est complète.';
+            }
+
+            $participation->setStatut(Participation::STATUT_ACCEPTEE);
+
+            // indique que l’acceptation a été effectuée
+            return null;
+        });
+
+        if ($erreur !== null) {
+            $this->addFlash('error', $erreur);
+        } else {
+            $this->addFlash('success', 'La demande a été acceptée.');
+        }
+
+        return $this->redirectToRoute('app_rencontre_show', ['id' => $rencontre->getId()]);
     }
 }

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\RencontreRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -54,6 +56,17 @@ class Rencontre
     #[ORM\ManyToOne(inversedBy: 'rencontresOrganisees')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $organisateur = null;
+
+    /**
+     * @var Collection<int, Participation>
+     */
+    #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'rencontre')]
+    private Collection $participations;
+
+    public function __construct()
+    {
+        $this->participations = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -142,5 +155,53 @@ class Rencontre
         $this->organisateur = $organisateur;
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, Participation>
+     */
+    public function getParticipations(): Collection
+    {
+        return $this->participations;
+    }
+
+    public function addParticipation(Participation $participation): static
+    {
+        if (!$this->participations->contains($participation)) {
+            $this->participations->add($participation);
+            $participation->setRencontre($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParticipation(Participation $participation): static
+    {
+        if ($this->participations->removeElement($participation)) {
+            // set the owning side to null (unless already changed)
+            if ($participation->getRencontre() === $this) {
+                $participation->setRencontre(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getNombreParticipationsAcceptees(): int
+    {
+        $nombre = 0;
+
+        foreach ($this->participations as $participation) {
+            if ($participation->getStatut() === Participation::STATUT_ACCEPTEE) {
+                $nombre++;
+            }
+        }
+
+        return $nombre;
+    }
+
+    public function getPlacesRestantes(): int
+    {
+        return $this->placesRecherchees - $this->getNombreParticipationsAcceptees();
     }
 }
