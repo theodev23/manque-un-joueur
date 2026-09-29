@@ -1,25 +1,46 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Rencontres à venir — Il nous manque un joueur{% endblock %}
+{% block title %}Les rencontres — Il nous manque un joueur{% endblock %}
 
 {% block body %}
-    <h1>Rencontres à venir</h1>
+    <div class="page-heading">
+        <div>
+            <h1>Les rencontres à venir</h1>
+            <p>Trouvez une rencontre et proposez votre participation. Horaires affichés à l’heure de Paris.</p>
+        </div>
 
-    <p><a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a></p>
-    <p>Les horaires sont affichés à l’heure de Paris.</p>
+        <a class="btn" href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
+    </div>
 
-    {% for rencontre in rencontres %}
-        <article>
-            <h2><a href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">{{ rencontre.titre }}</a></h2>
-            <p>{{ rencontre.ville }} — {{ rencontre.lieu }}</p>
-            <p>Le {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
-            <p>Joueurs recherchés : {{ rencontre.placesRecherchees }}</p>
+    <div class="cards-grid">
+        {% for rencontre in rencontres %}
+            {% set placesRestantes = rencontre.placesRestantes %}
 
-            {% if rencontre.description %}
-                <p>{{ rencontre.description }}</p>
-            {% endif %}
-        </article>
-    {% else %}
-        <p>Aucune rencontre à venir pour le moment.</p>
-    {% endfor %}
+            <article class="card">
+                {% if placesRestantes > 0 %}
+                    <span class="badge badge-available">
+                        {{ placesRestantes }} place{{ placesRestantes > 1 ? 's' : '' }} disponible{{ placesRestantes > 1 ? 's' : '' }}
+                    </span>
+                {% else %}
+                    <span class="badge badge-full">Complet</span>
+                {% endif %}
+
+                <h2>
+                    <a href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">{{ rencontre.titre }}</a>
+                </h2>
+
+                <div class="card-details">
+                    <p><strong>Ville :</strong> {{ rencontre.ville }}</p>
+                    <p><strong>Lieu :</strong> {{ rencontre.lieu }}</p>
+                    <p><strong>Date :</strong> {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+                </div>
+
+                <a class="btn btn-secondary" href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">Voir la rencontre</a>
+            </article>
+        {% else %}
+            <div class="empty-state">
+                <p>Aucune rencontre à venir pour le moment. Vous pouvez organiser la première !</p>
+            </div>
+        {% endfor %}
+    </div>
 {% endblock %}

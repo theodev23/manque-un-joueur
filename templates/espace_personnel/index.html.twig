@@ -3,40 +3,78 @@
 {% block title %}Mon espace — Il nous manque un joueur{% endblock %}
 
 {% block body %}
-    <h1>Mon espace</h1>
-    <p>Bonjour {{ app.user.pseudo }} !</p>
+    <div class="page-heading">
+        <div>
+            <h1>Mon espace</h1>
+            <p>Bonjour {{ app.user.pseudo }} ! Retrouvez ici vos rencontres et vos demandes de participation.</p>
+        </div>
+    </div>
 
-    <p><a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a></p>
-    <p><a href="{{ path('app_rencontre') }}">Voir les rencontres à venir</a></p>
+    <div class="actions">
+        <a class="btn" href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
+        <a class="btn btn-secondary" href="{{ path('app_rencontre') }}">Voir les rencontres à venir</a>
+    </div>
 
-    <h2>Mes rencontres organisées</h2>
+    <section class="dashboard-section">
+        <h2>Mes rencontres organisées</h2>
+        <p>Retrouvez vos rencontres passées et à venir. Horaires affichés à l’heure de Paris.</p>
 
-    {% for rencontre in rencontres %}
-        <article>
-            <h3><a href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">{{ rencontre.titre }}</a></h3>
-            <p>{{ rencontre.ville }} — {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
-            <p>Places restantes : {{ rencontre.placesRestantes }} sur {{ rencontre.placesRecherchees }}</p>
-        </article>
-    {% else %}
-        <p>Vous n’avez encore organisé aucune rencontre.</p>
-    {% endfor %}
+        <div class="cards-grid">
+            {% for rencontre in rencontres %}
+                <article class="card">
+                    <span class="badge badge-available">Organisateur</span>
 
-    <h2>Mes demandes de participation</h2>
+                    <h3>
+                        <a href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">{{ rencontre.titre }}</a>
+                    </h3>
 
-    {% for participation in participations %}
-        <article>
-            <h3><a href="{{ path('app_rencontre_show', {id: participation.rencontre.id}) }}">{{ participation.rencontre.titre }}</a></h3>
-            <p>{{ participation.rencontre.ville }} — {{ participation.rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+                    <div class="card-details">
+                        <p><strong>Ville :</strong> {{ rencontre.ville }}</p>
+                        <p><strong>Date :</strong> {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+                        <p><strong>Places restantes :</strong> {{ rencontre.placesRestantes }} sur {{ rencontre.placesRecherchees }}</p>
+                    </div>
 
-            {% if participation.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
-                <p>Statut : en attente</p>
-            {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_ACCEPTEE') %}
-                <p>Statut : acceptée</p>
-            {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_REFUSEE') %}
-                <p>Statut : refusée</p>
-            {% endif %}
-        </article>
-    {% else %}
-        <p>Vous n’avez encore envoyé aucune demande.</p>
-    {% endfor %}
+                    <a class="btn btn-secondary" href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">Voir les demandes</a>
+                </article>
+            {% else %}
+                <div class="empty-state">
+                    <p>Vous n’avez encore organisé aucune rencontre.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-section">
+        <h2>Mes demandes de participation</h2>
+        <p>Consultez la réponse de l’organisateur à chacune de vos demandes.</p>
+
+        <div class="cards-grid">
+            {% for participation in participations %}
+                <article class="card">
+                    {% if participation.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
+                        <span class="badge badge-pending">En attente</span>
+                    {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_ACCEPTEE') %}
+                        <span class="badge badge-available">Acceptée</span>
+                    {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_REFUSEE') %}
+                        <span class="badge badge-refused">Refusée</span>
+                    {% endif %}
+
+                    <h3>
+                        <a href="{{ path('app_rencontre_show', {id: participation.rencontre.id}) }}">{{ participation.rencontre.titre }}</a>
+                    </h3>
+
+                    <div class="card-details">
+                        <p><strong>Ville :</strong> {{ participation.rencontre.ville }}</p>
+                        <p><strong>Date :</strong> {{ participation.rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
+                    </div>
+
+                    <a class="btn btn-secondary" href="{{ path('app_rencontre_show', {id: participation.rencontre.id}) }}">Voir la rencontre</a>
+                </article>
+            {% else %}
+                <div class="empty-state">
+                    <p>Vous n’avez encore envoyé aucune demande.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 {% endblock %}

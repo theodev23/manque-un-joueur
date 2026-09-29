@@ -3,59 +3,37 @@
 {% block title %}Connexion — Il nous manque un joueur{% endblock %}
 
 {% block body %}
-    <h1>Se connecter</h1>
+    <section class="form-panel">
+        <h1>Se connecter</h1>
 
-    {% if app.user %}
-        <p>
-            Vous êtes connecté en tant que {{ app.user.pseudo }}.
-            <a href="{{ path('app_home') }}">Accueil</a>
-            <a href="{{ logout_path() }}">Se déconnecter</a>
-        </p>
-    {% else %}
-        <form method="post" action="{{ path('app_login') }}">
-            {% if error %}
-                <div class="alert alert-danger" role="alert">
-                    {{ error.messageKey|trans(error.messageData, 'security') }}
+        {% if app.user %}
+            <p>Vous êtes connecté en tant que {{ app.user.pseudo }}.</p>
+            <a class="btn" href="{{ path('app_home') }}">Accueil</a>
+            <a class="btn btn-secondary" href="{{ logout_path() }}">Se déconnecter</a>
+        {% else %}
+            <form method="post" action="{{ path('app_login') }}">
+                {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ error.messageKey|trans(error.messageData, 'security') }}
+                    </div>
+                {% endif %}
+
+                <div>
+                    <label for="username">Adresse e-mail</label>
+                    <input type="email" value="{{ last_username }}" name="_username" id="username" autocomplete="email" required autofocus>
                 </div>
-            {% endif %}
 
-            <div>
-                <label for="username">Adresse e-mail</label>
-                <input
-                    type="email"
-                    value="{{ last_username }}"
-                    name="_username"
-                    id="username"
-                    autocomplete="email"
-                    required
-                    autofocus
-                >
-            </div>
+                <div>
+                    <label for="password">Mot de passe</label>
+                    <input type="password" name="_password" id="password" autocomplete="current-password" required>
+                </div>
 
-            <div>
-                <label for="password">Mot de passe</label>
-                <input
-                    type="password"
-                    name="_password"
-                    id="password"
-                    autocomplete="current-password"
-                    required
-                >
-            </div>
+                <input type="hidden" name="_csrf_token" data-controller="csrf-protection" value="{{ csrf_token('authenticate') }}">
 
-            <input
-                type="hidden"
-                name="_csrf_token"
-                data-controller="csrf-protection"
-                value="{{ csrf_token('authenticate') }}"
-            >
+                <button type="submit" class="btn">Se connecter</button>
+            </form>
 
-            <button type="submit">Se connecter</button>
-        </form>
-
-        <p>
-            Pas encore de compte ?
-            <a href="{{ path('app_register') }}">Créer un compte</a>
-        </p>
-    {% endif %}
+            <p>Pas encore de compte ? <a href="{{ path('app_register') }}">Créer un compte</a></p>
+        {% endif %}
+    </section>
 {% endblock %}

@@ -3,18 +3,20 @@
 {% block title %}Organiser une rencontre — Il nous manque un joueur{% endblock %}
 
 {% block body %}
-    <h1>Organiser une rencontre</h1>
+    <section class="form-panel">
+        <h1>Organiser une rencontre</h1>
 
-    {{ form_start(rencontreForm) }}
-        {{ form_errors(rencontreForm) }}
+        {{ form_start(rencontreForm) }}
+            {{ form_errors(rencontreForm) }}
 
-        {{ form_row(rencontreForm.titre) }}
-        {{ form_row(rencontreForm.ville) }}
-        {{ form_row(rencontreForm.lieu) }}
-        {{ form_row(rencontreForm.dateHeure) }}
-        {{ form_row(rencontreForm.placesRecherchees) }}
-        {{ form_row(rencontreForm.description) }}
+            {{ form_row(rencontreForm.titre) }}
+            {{ form_row(rencontreForm.ville) }}
+            {{ form_row(rencontreForm.lieu) }}
+            {{ form_row(rencontreForm.dateHeure) }}
+            {{ form_row(rencontreForm.placesRecherchees) }}
+            {{ form_row(rencontreForm.description) }}
 
-        <button type="submit">Publier la rencontre</button>
-    {{ form_end(rencontreForm) }}
+            <button type="submit" class="btn">Publier la rencontre</button>
+        {{ form_end(rencontreForm) }}
+    </section>
 {% endblock %}

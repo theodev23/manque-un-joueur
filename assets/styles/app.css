@@ -1,3 +1,533 @@
-body {
-    background-color: skyblue;
+/* Présentation générale */
+/* box-sizing: border-box : la largeur d’un élément comprend ses bordures et ses espacements intérieurs. */
+* {
+    box-sizing: border-box;
 }
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    color: #1f2937;
+    background-color: #f5f7f6;
+}
+
+/* le contenu occupe 92 % de la largeur disponible, sans dépasser 1 100 pixels. */
+/* centre horizontalement le contenu. */
+.container {
+    width: min(1100px, 92%);
+    margin-inline: auto;
+}
+
+.page-content {
+    padding-block: 40px;
+}
+
+h1,
+h2,
+h3 {
+    line-height: 1.25;
+    color: #163c2d;
+}
+
+h1 {
+    margin-top: 0;
+    font-size: 2rem;
+}
+
+p {
+    margin-block: 0 16px;
+}
+
+a {
+    color: #176b46;
+    text-underline-offset: 3px;
+}
+
+a:hover {
+    text-decoration-thickness: 2px;
+}
+
+a:focus-visible {
+    outline: 3px solid #b45309;
+    outline-offset: 4px;
+}
+
+/* Navigation */
+.site-header {
+    background-color: #163c2d;
+    color: #ffffff;
+}
+
+.navigation {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px 32px;
+    padding-block: 20px;
+}
+
+.site-header a {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.site-header a:hover {
+    text-decoration: underline;
+}
+
+.site-header a:focus-visible {
+    outline-color: #fcd34d;
+}
+
+.site-brand {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+/* disposent les liens avec un espacement régulier. */
+.navigation-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+}
+
+.navigation-user {
+    color: #d1e7da;
+    overflow-wrap: anywhere;
+}
+
+/* Adaptation aux petits écrans */
+@media (max-width: 700px) {
+    .navigation {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .navigation-links {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .page-content {
+        padding-block: 24px;
+    }
+
+    h1 {
+        font-size: 1.65rem;
+    }
+}
+
+/* Conteneur des formulaires */
+.form-panel {
+    max-width: 600px;
+    margin-inline: auto;
+    padding: 28px;
+    background-color: #ffffff;
+    border: 1px solid #dce5df;
+    border-radius: 12px;
+}
+
+/* Champs et libellés */
+.form-panel form > div {
+    margin-bottom: 20px;
+}
+
+.form-panel label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: bold;
+}
+
+.form-panel input:not([type="checkbox"]):not([type="hidden"]),
+.form-panel select,
+.form-panel textarea {
+    display: block;
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    color: inherit;
+    background-color: #ffffff;
+    border: 1px solid #87978d;
+    border-radius: 6px;
+}
+
+.form-panel textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+.form-panel input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    accent-color: #176b46;
+}
+
+.form-panel input[type="checkbox"] + label {
+    display: inline;
+    margin-left: 8px;
+    font-weight: normal;
+}
+
+.form-panel input:focus-visible,
+.form-panel select:focus-visible,
+.form-panel textarea:focus-visible {
+    outline: 3px solid #176b46;
+    outline-offset: 2px;
+}
+
+.form-panel .help-text {
+    margin-top: 6px;
+    font-size: 0.9rem;
+    color: #526158;
+}
+
+/* Erreurs de validation des formulaires Symfony */
+.form-panel form ul {
+    padding-left: 20px;
+    color: #a12622;
+}
+
+/* Boutons et liens présentés comme des boutons */
+.btn {
+    display: inline-block;
+    padding: 10px 18px;
+    font: inherit;
+    font-weight: bold;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+    color: #ffffff;
+    background-color: #176b46;
+    border: 1px solid #176b46;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    color: #ffffff;
+    background-color: #115235;
+    border-color: #115235;
+    text-decoration: none;
+}
+
+.btn:focus-visible {
+    outline: 3px solid #b45309;
+    outline-offset: 3px;
+}
+
+.btn-secondary {
+    color: #176b46;
+    background-color: #ffffff;
+}
+
+.btn-secondary:hover {
+    color: #115235;
+    background-color: #e8f2ec;
+}
+
+@media (max-width: 700px) {
+    .form-panel {
+        padding: 20px;
+    }
+}
+
+.form-panel form {
+    margin-bottom: 20px;
+}
+
+.alert {
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+}
+
+.alert-danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+}
+
+/* En-tête des pages */
+.page-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.page-heading h1 {
+    margin-bottom: 8px;
+}
+
+.page-heading p {
+    margin-bottom: 0;
+    color: #526158;
+}
+
+/* Cartes des rencontres */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    gap: 24px;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    padding: 24px;
+    background-color: #ffffff;
+    border: 1px solid #dce5df;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+}
+
+.card h2 {
+    margin-block: 16px;
+    font-size: 1.35rem;
+}
+
+.card-details {
+    margin-bottom: 20px;
+}
+
+.card-details p {
+    margin-bottom: 8px;
+}
+
+.card > .btn {
+    margin-top: auto;
+}
+
+/* Indicateurs de disponibilité */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    font-size: 0.875rem;
+    font-weight: bold;
+    border-radius: 20px;
+}
+
+.badge-available {
+    color: #115235;
+    background-color: #e8f2ec;
+}
+
+.badge-full {
+    color: #526158;
+    background-color: #edf0ee;
+}
+
+/* Message lorsque la liste est vide */
+.empty-state {
+    grid-column: 1 / -1;
+    padding: 32px;
+    text-align: center;
+    background-color: #ffffff;
+    border: 1px dashed #87978d;
+    border-radius: 12px;
+}
+
+.empty-state p {
+    margin-bottom: 0;
+}
+
+/* Blocs de la page de détail */
+.detail-panel {
+    margin-bottom: 24px;
+    padding: 24px;
+    background-color: #ffffff;
+    border: 1px solid #dce5df;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+}
+
+.detail-panel h2 {
+    margin-top: 0;
+}
+
+.detail-panel > p:last-child {
+    margin-bottom: 0;
+}
+
+.meeting-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+    gap: 20px;
+    margin: 0;
+}
+
+.meeting-details dt {
+    margin-bottom: 4px;
+    font-weight: bold;
+    color: #163c2d;
+}
+
+.meeting-details dd {
+    margin: 0;
+}
+
+.meeting-description {
+    margin-top: 24px;
+}
+
+.meeting-description p {
+    margin-bottom: 0;
+    white-space: pre-line;
+}
+
+/* Demandes de participation */
+.participation-list {
+    display: grid;
+    gap: 16px;
+}
+
+.participation-card {
+    padding: 20px;
+    background-color: #f5f7f6;
+    border: 1px solid #dce5df;
+    border-radius: 8px;
+}
+
+.participation-card h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.participation-card > p:last-child {
+    margin-bottom: 0;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+}
+
+.actions form {
+    margin: 0;
+}
+
+/* Messages et statuts */
+.alert-success {
+    color: #115235;
+    background-color: #e8f2ec;
+    border-color: #badbcc;
+}
+
+.badge-pending {
+    color: #664d03;
+    background-color: #fff3cd;
+}
+
+.badge-refused {
+    color: #842029;
+    background-color: #f8d7da;
+}
+
+/* Sections de l’espace personnel */
+.dashboard-section {
+    margin-top: 40px;
+}
+
+.card h3 {
+    margin-block: 16px;
+    font-size: 1.25rem;
+}
+
+/* Page d’accueil */
+.home-intro {
+    padding: 40px;
+    background-color: #e8f2ec;
+    border: 1px solid #badbcc;
+    border-radius: 12px;
+}
+
+.home-intro h1 {
+    max-width: 700px;
+    font-size: clamp(2rem, 5vw, 3rem);
+}
+
+.home-description {
+    max-width: 700px;
+    margin-bottom: 24px;
+    font-size: 1.125rem;
+}
+
+.home-account-link {
+    margin-top: 20px;
+    margin-bottom: 0;
+}
+
+.home-steps {
+    margin-top: 40px;
+}
+
+.steps-list {
+    padding: 0;
+    list-style: none;
+}
+
+.step-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    font-weight: bold;
+    color: #ffffff;
+    background-color: #176b46;
+    border-radius: 50%;
+}
+
+.steps-list .card > p {
+    margin-bottom: 0;
+}
+
+@media (max-width: 700px) {
+    .home-intro {
+        padding: 24px;
+    }
+}
+
+/* Fond du site : stade atténué par un voile clair */
+body {
+    background-color: #edf3ef;
+    background-image:
+        linear-gradient(
+            rgba(245, 248, 246, 0.40),
+            rgba(245, 248, 246, 0.40)
+        ),
+        url('/images/stade.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* Relief discret des blocs sur le fond */
+.home-intro,
+.card,
+.form-panel,
+.detail-panel,
+.empty-state {
+    box-shadow: 0 6px 24px rgba(16, 50, 35, 0.08);
+}
+
+/* Fond défilant sur les petits écrans */
+@media (max-width: 700px) {
+    body {
+        background-attachment: scroll;
+    }
+}
+
+

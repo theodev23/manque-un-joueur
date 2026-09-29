@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}Il nous manque un joueur{% endblock %}</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
         {% block stylesheets %}
         {% endblock %}
@@ -19,24 +20,28 @@
         {% endif %}
     </head>
     <body>
-        <header>
-            <nav aria-label="Navigation principale">
-                <a href="{{ path('app_home') }}">Accueil</a>
-                <a href="{{ path('app_rencontre') }}">Rencontres</a>
+        <header class="site-header">
+            <nav class="navigation container" aria-label="Navigation principale">
+                <a class="site-brand" href="{{ path('app_home') }}">Il nous manque un joueur</a>
 
-                {% if app.user %}
-                    <a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
-                    <a href="{{ path('app_espace_personnel') }}">Mon espace</a>
-                    <span>Connecté : {{ app.user.pseudo }}</span>
-                    <a href="{{ logout_path() }}">Se déconnecter</a>
-                {% else %}
-                    <a href="{{ path('app_register') }}">Créer un compte</a>
-                    <a href="{{ path('app_login') }}">Se connecter</a>
-                {% endif %}
+                <div class="navigation-links">
+                    <a href="{{ path('app_home') }}">Accueil</a>
+                    <a href="{{ path('app_rencontre') }}">Rencontres</a>
+
+                    {% if app.user %}
+                        <a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
+                        <a href="{{ path('app_espace_personnel') }}">Mon espace</a>
+                        <span class="navigation-user">Connecté : {{ app.user.pseudo }}</span>
+                        <a href="{{ logout_path() }}">Se déconnecter</a>
+                    {% else %}
+                        <a href="{{ path('app_register') }}">Créer un compte</a>
+                        <a href="{{ path('app_login') }}">Se connecter</a>
+                    {% endif %}
+                </div>
             </nav>
         </header>
 
-        <main>
+        <main class="container page-content">
             {% block body %}{% endblock %}
         </main>
     </body>

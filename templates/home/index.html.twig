@@ -3,24 +3,56 @@
 {% block title %}Il nous manque un joueur{% endblock %}
 
 {% block body %}
-    <h1>Il nous manque un joueur</h1>
+    <section class="home-intro">
+        <h1>Un joueur en moins ? Le match peut quand même avoir lieu.</h1>
 
-    <p>Un match prévu, mais une équipe incomplète ? Publiez votre rencontre et trouvez les joueurs manquants.</p>
+        <p class="home-description">
+            Une équipe incomplète ou simplement envie de jouer ?
+            Organisez une rencontre de football ou proposez votre participation à un match près de chez vous.
+        </p>
 
-    <p><a href="{{ path('app_rencontre') }}">Trouver une rencontre</a></p>
+        <div class="actions">
+            <a class="btn" href="{{ path('app_rencontre') }}">Trouver une rencontre</a>
 
-    {% if app.user %}
-        <p><a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a></p>
-        <p><a href="{{ path('app_espace_personnel') }}">Retrouver mes rencontres et mes demandes</a></p>
-    {% else %}
-        <p><a href="{{ path('app_register') }}">Créer un compte pour rejoindre le jeu</a></p>
-    {% endif %}
+            {% if app.user %}
+                <a class="btn btn-secondary" href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
+            {% else %}
+                <a class="btn btn-secondary" href="{{ path('app_register') }}">Créer un compte</a>
+            {% endif %}
+        </div>
 
-    <h2>Comment ça fonctionne ?</h2>
+        {% if app.user %}
+            <p class="home-account-link">
+                <a href="{{ path('app_espace_personnel') }}">Retrouver mes rencontres et mes demandes</a>
+            </p>
+        {% else %}
+            <p class="home-account-link">
+                Déjà inscrit ? <a href="{{ path('app_login') }}">Se connecter</a>
+            </p>
+        {% endif %}
+    </section>
 
-    <ol>
-        <li>Créez votre compte.</li>
-        <li>Proposez une rencontre ou demandez à rejoindre un match.</li>
-        <li>Consultez la réponse de l’organisateur dans votre espace personnel.</li>
-    </ol>
+    <section class="home-steps">
+        <h2>Comment ça fonctionne ?</h2>
+
+        <ol class="cards-grid steps-list" role="list">
+            <li class="card">
+                <span class="step-number" aria-hidden="true">1</span>
+                <h3>Créez votre compte</h3>
+                <p>Inscrivez-vous pour organiser une rencontre ou envoyer une demande de participation.</p>
+            </li>
+
+            <li class="card">
+                <span class="step-number" aria-hidden="true">2</span>
+                <h3>Trouvez votre prochain match</h3>
+                <p>Consultez les rencontres à venir ou publiez la vôtre en précisant le lieu, la date et le nombre de joueurs recherchés.</p>
+            </li>
+
+            <li class="card">
+                <span class="step-number" aria-hidden="true">3</span>
+                <h3>Suivez les participations</h3>
+                <p>Depuis votre espace, consultez la réponse à vos demandes ou gérez celles reçues pour vos rencontres.</p>
+            </li>
+        </ol>
+    </section>
 {% endblock %}
