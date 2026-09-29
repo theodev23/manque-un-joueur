@@ -1,20 +1,26 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello HomeController!{% endblock %}
+{% block title %}Il nous manque un joueur{% endblock %}
 
 {% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+    <h1>Il nous manque un joueur</h1>
 
-<div class="example-wrapper">
-    <h1>Hello {{ controller_name }}! ✅</h1>
+    <p>Un match prévu, mais une équipe incomplète ? Publiez votre rencontre et trouvez les joueurs manquants.</p>
 
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>/Users/theodevarenne/Developer/manque-un-joueur/src/Controller/HomeController.php</code></li>
-        <li>Your template at <code>/Users/theodevarenne/Developer/manque-un-joueur/templates/home/index.html.twig</code></li>
-    </ul>
-</div>
+    <p><a href="{{ path('app_rencontre') }}">Trouver une rencontre</a></p>
+
+    {% if app.user %}
+        <p><a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a></p>
+        <p><a href="{{ path('app_espace_personnel') }}">Retrouver mes rencontres et mes demandes</a></p>
+    {% else %}
+        <p><a href="{{ path('app_register') }}">Créer un compte pour rejoindre le jeu</a></p>
+    {% endif %}
+
+    <h2>Comment ça fonctionne ?</h2>
+
+    <ol>
+        <li>Créez votre compte.</li>
+        <li>Proposez une rencontre ou demandez à rejoindre un match.</li>
+        <li>Consultez la réponse de l’organisateur dans votre espace personnel.</li>
+    </ol>
 {% endblock %}
