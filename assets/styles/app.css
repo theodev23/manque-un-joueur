@@ -530,4 +530,45 @@ body {
     }
 }
 
+/* Recherche de rencontres par ville */
+.search-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background-color: #ffffff;
+    border: 1px solid #dce5df;
+    border-radius: 12px;
+}
+
+.search-field {
+    flex: 1 1 240px;
+    min-width: 0;
+}
+
+.search-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: #163c2d;
+}
+
+.search-field input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    color: #163c2d;
+    background-color: #ffffff;
+    border: 1px solid #87978d;
+    border-radius: 6px;
+}
+
+.search-field input:focus-visible {
+    outline: 3px solid #176b46;
+    outline-offset: 2px;
+}
+
 

@@ -18,12 +18,24 @@ class RencontreRepository extends ServiceEntityRepository
 
     // Le QueryBuilder permet de construire une requête en utilisant les propriétés des entités.
     // On donne l'alias r à l'entité rencontre.
-    public function findRencontresAVenir(): array
+    // string $ville = '' rend le filtre facultatif.
+    // setParameter() transmet la valeur séparément de la requête, pour éviter les injections SQL.
+    public function findRencontresAVenir(string $ville = ''): array
     {
-        return $this->createQueryBuilder('r')
+        $queryBuilder = $this->createQueryBuilder('r')
             ->andWhere('r.dateHeure > :maintenant')
             ->setParameter('maintenant', new \DateTimeImmutable('now', new \DateTimeZone('UTC')))
-            ->orderBy('r.dateHeure', 'ASC')
+            ->orderBy('r.dateHeure', 'ASC');
+
+        $ville = trim($ville);
+
+        if ($ville !== '') {
+            $queryBuilder
+                ->andWhere('LOWER(r.ville) = LOWER(:ville)')
+                ->setParameter('ville', $ville);
+        }
+
+        return $queryBuilder
             ->getQuery()
             ->getResult();
     }

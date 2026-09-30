@@ -12,6 +12,16 @@
         <a class="btn" href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
     </div>
 
+    <form method="get" action="{{ path('app_rencontre') }}" class="search-form">
+        <div class="search-field">
+            <label for="ville">Ville</label>
+            <input type="search" id="ville" name="ville" value="{{ ville }}" placeholder="Ex. : Montpellier" maxlength="100">
+        </div>
+
+        <button type="submit" class="btn">Rechercher</button>
+        <a class="btn btn-secondary" href="{{ path('app_rencontre') }}">Réinitialiser</a>
+    </form>
+
     <div class="cards-grid">
         {% for rencontre in rencontres %}
             {% set placesRestantes = rencontre.placesRestantes %}
@@ -39,7 +49,11 @@
             </article>
         {% else %}
             <div class="empty-state">
-                <p>Aucune rencontre à venir pour le moment. Vous pouvez organiser la première !</p>
+                {% if ville != '' %}
+                    <p>Aucune rencontre à venir à « {{ ville }} ». Essayez une autre ville ou réinitialisez la recherche.</p>
+                {% else %}
+                    <p>Aucune rencontre à venir pour le moment. Vous pouvez organiser la première !</p>
+                {% endif %}
             </div>
         {% endfor %}
     </div>

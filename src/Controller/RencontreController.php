@@ -20,12 +20,15 @@ use Doctrine\DBAL\LockMode;
 final class RencontreController extends AbstractController
 {
     #[Route('/rencontre', name: 'app_rencontre', methods: ['GET'])]
-    public function index(RencontreRepository $rencontreRepository): Response
+    public function index(Request $request, RencontreRepository $rencontreRepository): Response
     {
-        $rencontres = $rencontreRepository->findRencontresAVenir();
+        $ville = trim($request->query->getString('ville'));
+
+        $rencontres = $rencontreRepository->findRencontresAVenir($ville);
 
         return $this->render('rencontre/index.html.twig', [
             'rencontres' => $rencontres,
+            'ville' => $ville,
         ]);
     }
 
