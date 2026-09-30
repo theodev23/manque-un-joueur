@@ -328,4 +328,74 @@ final class RencontreController extends AbstractController
             'rencontreForm' => $form,
         ]);
     }
+
+    #[Route('/participation/{id}/annuler', name: 'app_participation_annuler', requirements: ['id' => '\d+'], methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function annulerParticipation(
+        int $id,
+        Request $request,
+        ParticipationRepository $participationRepository,
+        EntityManagerInterface $entityManager,
+        #[CurrentUser] User $user
+    ): Response {
+        $participation = $participationRepository->find($id);
+
+        if ($participation === null) {
+            throw $this->createNotFoundException('Cette demande n’existe pas.');
+        }
+
+        if ($participation->getUtilisateur()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException(
+                'Vous pouvez uniquement annuler votre propre participation.'
+            );
+        }
+
+        if (!$this->isCsrfTokenValid(
+            'annuler_' . $id,
+            $request->request->get('_token')
+        )) {
+            throw $this->createAccessDeniedException('Le formulaire est invalide.');
+        }
+
+        $rencontre = $participation->getRencontre();
+        $rencontreId = $rencontre->getId();
+
+        $erreur = $entityManager->wrapInTransaction(function () use (
+            $entityManager,
+            $rencontre,
+            $participation
+        ): ?string {
+            // Même ordre de verrouillage que dans accepter().
+            $entityManager->refresh($rencontre, LockMode::PESSIMISTIC_WRITE);
+            $entityManager->refresh($participation, LockMode::PESSIMISTIC_WRITE);
+
+            $maintenant = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+            if ($rencontre->getDateHeure() <= $maintenant) {
+                return 'La rencontre a déjà commencé : vous ne pouvez plus annuler votre participation.';
+            }
+
+            if (!in_array($participation->getStatut(), [
+                Participation::STATUT_EN_ATTENTE,
+                Participation::STATUT_ACCEPTEE,
+            ], true)) {
+                return 'Seule une demande en attente ou acceptée peut être annulée.';
+            }
+
+            $entityManager->remove($participation);
+
+            // La suppression sera effectuée par le flush() de wrapInTransaction().
+            return null;
+        });
+
+        if ($erreur !== null) {
+            $this->addFlash('error', $erreur);
+        } else {
+            $this->addFlash('success', 'Votre participation a bien été annulée.');
+        }
+
+        return $this->redirectToRoute('app_rencontre_show', [
+            'id' => $rencontreId,
+        ]);
+    }
 }

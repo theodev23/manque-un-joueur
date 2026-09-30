@@ -100,6 +100,26 @@
             <p>Connectez-vous pour demander à participer.</p>
             <a class="btn" href="{{ path('app_login') }}">Se connecter</a>
         {% endif %}
+        
+        {% if participation and not estOrganisateur and inscriptionsOuvertes %}
+            {% if participation.statut in [
+                constant('App\\Entity\\Participation::STATUT_EN_ATTENTE'),
+                constant('App\\Entity\\Participation::STATUT_ACCEPTEE')
+            ] %}
+                <form method="post" action="{{ path('app_participation_annuler', {id: participation.id}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('annuler_' ~ participation.id) }}">
+
+                    <button type="submit" class="btn btn-secondary">
+                        {% if participation.statut == constant('App\\Entity\\Participation::STATUT_ACCEPTEE') %}
+                            Annuler ma participation
+                        {% else %}
+                            Annuler ma demande
+                        {% endif %}
+                    </button>
+                </form>
+            {% endif %}
+        {% endif %}
+    
     </section>
 
     {% if estOrganisateur %}
