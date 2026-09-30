@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier la rencontre — Il nous manque un joueur{% endblock %}
+
+{% block body %}
+    <section class="form-panel">
+        <h1>Modifier la rencontre</h1>
+
+        {{ form_start(rencontreForm) }}
+            {{ form_errors(rencontreForm) }}
+
+            {{ form_row(rencontreForm.titre) }}
+            {{ form_row(rencontreForm.ville) }}
+            {{ form_row(rencontreForm.lieu) }}
+            {{ form_row(rencontreForm.dateHeure) }}
+            {{ form_row(rencontreForm.placesRecherchees) }}
+            {{ form_row(rencontreForm.description) }}
+
+            <div class="actions">
+                <button type="submit" class="btn">Enregistrer les modifications</button>
+                <a class="btn btn-secondary" href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">Annuler</a>
+            </div>
+        {{ form_end(rencontreForm) }}
+    </section>
+{% endblock %}

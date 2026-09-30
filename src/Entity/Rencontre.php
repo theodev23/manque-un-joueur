@@ -21,9 +21,19 @@ class Rencontre
     private ?int $id = null;
 
     #[ORM\Column(length: 120)]
+    #[Assert\NotBlank(message: 'Veuillez renseigner un titre.')]
+    #[Assert\Length(
+        max: 120,
+        maxMessage: 'Le titre ne doit pas dépasser {{ limit }} caractères.'
+    )]
     private ?string $titre = null;
 
     #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Veuillez renseigner une ville.')]
+    #[Assert\Length(
+        max: 100,
+        maxMessage: 'La ville ne doit pas dépasser {{ limit }} caractères.'
+    )]
     private ?string $ville = null;
 
     #[ORM\Column(length: 255)]

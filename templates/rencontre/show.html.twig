@@ -69,7 +69,9 @@
 
         {% if estOrganisateur %}
             <p>Vous êtes l’organisateur de cette rencontre.</p>
-
+            {% if inscriptionsOuvertes %}
+                <a class="btn" href="{{ path('app_rencontre_edit', {id: rencontre.id}) }}">Modifier la rencontre</a>
+            {% endif %}
         {% elseif participation %}
             {% if participation.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
                 <p><span class="badge badge-pending">En attente</span></p>

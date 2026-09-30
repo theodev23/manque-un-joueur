@@ -12,16 +12,19 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Form\FormError;
 use App\Repository\RencontreRepository;
 use App\Entity\Participation;
 use App\Repository\ParticipationRepository;
 use Doctrine\DBAL\LockMode;
+
 
 final class RencontreController extends AbstractController
 {
     #[Route('/rencontre', name: 'app_rencontre', methods: ['GET'])]
     public function index(Request $request, RencontreRepository $rencontreRepository): Response
     {
+        // $request->query récupère les paramètres de l’URL. Par exemple, pour /rencontre?ville=Montpellier, nous récupérons Montpellier
         $ville = trim($request->query->getString('ville'));
 
         $rencontres = $rencontreRepository->findRencontresAVenir($ville);
@@ -227,5 +230,102 @@ final class RencontreController extends AbstractController
         }
 
         return $this->redirectToRoute('app_rencontre_show', ['id' => $rencontre->getId()]);
+    }
+
+    #[Route('/rencontre/{id}/modifier', name: 'app_rencontre_edit', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function modifier(
+        int $id,
+        Request $request,
+        RencontreRepository $rencontreRepository,
+        ParticipationRepository $participationRepository,
+        EntityManagerInterface $entityManager,
+        #[CurrentUser] User $user
+    ): Response {
+        $rencontre = $rencontreRepository->find($id);
+
+        if ($rencontre === null) {
+            throw $this->createNotFoundException('Cette rencontre n’existe pas.');
+        }
+
+        if ($rencontre->getOrganisateur()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException(
+                'Seul l’organisateur peut modifier cette rencontre.'
+            );
+        }
+
+        $maintenant = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+        if ($rencontre->getDateHeure() <= $maintenant) {
+            $this->addFlash('error', 'Une rencontre déjà commencée ne peut plus être modifiée.');
+
+            return $this->redirectToRoute('app_rencontre_show', ['id' => $id]);
+        }
+
+        // Le formulaire doit travailler sur une copie pour conserver les données enregistrées jusqu’à la fin des contrôles.
+        $rencontreModifiee = clone $rencontre;
+
+        $form = $this->createForm(RencontreType::class, $rencontreModifiee);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $erreur = $entityManager->wrapInTransaction(function () use (
+                $entityManager,
+                $participationRepository,
+                $rencontre,
+                $rencontreModifiee
+            ): ?string {
+                // Même verrou que lors de l’acceptation d’une participation. Le verrou coordonne la modification avec l'action accepter() : le contrôle des places et l’enregistrement se font dans la même transaction. Doctrine exige une transaction pour ce type de verrou.
+                $entityManager->refresh($rencontre, LockMode::PESSIMISTIC_WRITE);
+
+                $maintenant = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+
+                // Vérification de la date actuellement enregistrée.
+                if ($rencontre->getDateHeure() <= $maintenant) {
+                    return 'Cette rencontre a déjà commencé et ne peut plus être modifiée.';
+                }
+
+                // Vérification de la nouvelle date proposée.
+                if ($rencontreModifiee->getDateHeure() <= $maintenant) {
+                    return 'La rencontre doit avoir lieu dans le futur.';
+                }
+
+                $nombreAcceptees = $participationRepository->count([
+                    'rencontre' => $rencontre,
+                    'statut' => Participation::STATUT_ACCEPTEE,
+                ]);
+
+                if ($rencontreModifiee->getPlacesRecherchees() < $nombreAcceptees) {
+                    return sprintf(
+                        'Le nombre de joueurs recherchés ne peut pas être inférieur à %d : autant de participations sont déjà acceptées.',
+                        $nombreAcceptees
+                    );
+                }
+
+                // Les contrôles sont passés : on applique les nouvelles valeurs.
+                $rencontre->setTitre($rencontreModifiee->getTitre());
+                $rencontre->setVille($rencontreModifiee->getVille());
+                $rencontre->setLieu($rencontreModifiee->getLieu());
+                $rencontre->setDateHeure($rencontreModifiee->getDateHeure());
+                $rencontre->setPlacesRecherchees($rencontreModifiee->getPlacesRecherchees());
+                $rencontre->setDescription($rencontreModifiee->getDescription());
+
+                // wrapInTransaction() effectue automatiquement le flush().
+                return null;
+            });
+
+            if ($erreur === null) {
+                $this->addFlash('success', 'La rencontre a bien été modifiée.');
+
+                return $this->redirectToRoute('app_rencontre_show', ['id' => $id]);
+            }
+
+            $form->addError(new FormError($erreur));
+        }
+
+        return $this->render('rencontre/edit.html.twig', [
+            'rencontre' => $rencontre,
+            'rencontreForm' => $form,
+        ]);
     }
 }
