@@ -12,7 +12,9 @@
             <p>Organisée par {{ rencontre.organisateur.pseudo }}</p>
         </div>
 
-        {% if not inscriptionsOuvertes %}
+        {% if rencontre.annulee %}
+            <span class="badge badge-refused">Annulée</span>
+        {% elseif not inscriptionsOuvertes %}
             <span class="badge badge-full">Inscriptions fermées</span>
         {% elseif placesRestantes <= 0 %}
             <span class="badge badge-full">Complet</span>
@@ -50,10 +52,12 @@
                 <dd>{{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }} — heure de Paris</dd>
             </div>
 
-            <div>
-                <dt>Places restantes</dt>
-                <dd>{{ placesRestantes }} sur {{ rencontre.placesRecherchees }}</dd>
-            </div>
+            {% if not rencontre.annulee %}
+                <div>
+                    <dt>Places restantes</dt>
+                    <dd>{{ placesRestantes }} sur {{ rencontre.placesRecherchees }}</dd>
+                </div>
+            {% endif %}
         </dl>
 
         {% if rencontre.description %}
@@ -67,11 +71,19 @@
     <section class="detail-panel">
         <h2>Votre participation</h2>
 
-        {% if estOrganisateur %}
+        {% if rencontre.annulee %}
+            <p>Cette rencontre a été annulée par son organisateur. Elle n’aura pas lieu.</p>
+
+        {% elseif estOrganisateur %}
             <p>Vous êtes l’organisateur de cette rencontre.</p>
+
             {% if inscriptionsOuvertes %}
-                <a class="btn" href="{{ path('app_rencontre_edit', {id: rencontre.id}) }}">Modifier la rencontre</a>
+                <div class="actions">
+                    <a class="btn" href="{{ path('app_rencontre_edit', {id: rencontre.id}) }}">Modifier la rencontre</a>
+                    <a class="btn btn-danger" href="{{ path('app_rencontre_annuler', {id: rencontre.id}) }}">Annuler la rencontre</a>
+                </div>
             {% endif %}
+
         {% elseif participation %}
             {% if participation.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
                 <p><span class="badge badge-pending">En attente</span></p>
@@ -126,7 +138,9 @@
         <section class="detail-panel">
             <h2>Demandes de participation</h2>
 
-            {% if not inscriptionsOuvertes %}
+            {% if rencontre.annulee %}
+                <p>Cette rencontre est annulée. Les demandes ci-dessous sont conservées à titre d’historique.</p>
+            {% elseif not inscriptionsOuvertes %}
                 <p>Cette rencontre a déjà commencé : les demandes ne peuvent plus être traitées.</p>
             {% endif %}
 

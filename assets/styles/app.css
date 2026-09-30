@@ -571,4 +571,16 @@ body {
     outline-offset: 2px;
 }
 
+/* Action d’annulation */
+.btn-danger {
+    color: #ffffff;
+    background-color: #a12622;
+    border-color: #a12622;
+}
+
+.btn-danger:hover {
+    color: #ffffff;
+    background-color: #7d1d1a;
+    border-color: #7d1d1a;
+}
 

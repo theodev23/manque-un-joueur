@@ -73,6 +73,9 @@ class Rencontre
     #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'rencontre')]
     private Collection $participations;
 
+    #[ORM\Column(options: ['default' => false])]
+    private bool $annulee = false;
+
     public function __construct()
     {
         $this->participations = new ArrayCollection();
@@ -213,5 +216,15 @@ class Rencontre
     public function getPlacesRestantes(): int
     {
         return $this->placesRecherchees - $this->getNombreParticipationsAcceptees();
+    }
+
+    public function isAnnulee(): bool
+    {
+        return $this->annulee;
+    }
+
+    public function annuler(): void
+    {
+        $this->annulee = true;
     }
 }

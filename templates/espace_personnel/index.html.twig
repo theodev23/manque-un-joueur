@@ -22,7 +22,11 @@
         <div class="cards-grid">
             {% for rencontre in rencontres %}
                 <article class="card">
-                    <span class="badge badge-available">Organisateur</span>
+                    {% if rencontre.annulee %}
+                        <span class="badge badge-refused">Annulée</span>
+                    {% else %}
+                        <span class="badge badge-available">Organisateur</span>
+                    {% endif %}
 
                     <h3>
                         <a href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">{{ rencontre.titre }}</a>
@@ -31,7 +35,9 @@
                     <div class="card-details">
                         <p><strong>Ville :</strong> {{ rencontre.ville }}</p>
                         <p><strong>Date :</strong> {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}</p>
-                        <p><strong>Places restantes :</strong> {{ rencontre.placesRestantes }} sur {{ rencontre.placesRecherchees }}</p>
+                        {% if not rencontre.annulee %}
+                            <p><strong>Places restantes :</strong> {{ rencontre.placesRestantes }} sur {{ rencontre.placesRecherchees }}</p>
+                        {% endif %}
                     </div>
 
                     <a class="btn btn-secondary" href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">Voir les demandes</a>
@@ -51,7 +57,9 @@
         <div class="cards-grid">
             {% for participation in participations %}
                 <article class="card">
-                    {% if participation.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
+                    {% if participation.rencontre.annulee %}
+                        <span class="badge badge-refused">Rencontre annulée</span>
+                    {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_EN_ATTENTE') %}
                         <span class="badge badge-pending">En attente</span>
                     {% elseif participation.statut == constant('App\\Entity\\Participation::STATUT_ACCEPTEE') %}
                         <span class="badge badge-available">Acceptée</span>

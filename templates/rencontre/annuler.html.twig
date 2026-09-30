@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Annuler la rencontre — Il nous manque un joueur{% endblock %}
+
+{% block body %}
+    <section class="form-panel">
+        <h1>Annuler la rencontre</h1>
+
+        <p>
+            Voulez-vous annuler la rencontre
+            <strong>« {{ rencontre.titre }} »</strong> ?
+        </p>
+
+        <p>
+            Prévue à {{ rencontre.ville }},
+            le {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}
+            — heure de Paris.
+        </p>
+
+        <p>
+            Elle ne sera plus proposée dans les rencontres à venir.
+            Les joueurs retrouveront la mention « Annulée » dans leur espace personnel.
+            Les demandes seront conservées, mais ne pourront plus être traitées.
+        </p>
+
+        <p>Vous ne pourrez pas réactiver cette rencontre depuis l’application.</p>
+
+        <form method="post" action="{{ path('app_rencontre_annuler', {id: rencontre.id}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('annuler_rencontre_' ~ rencontre.id) }}">
+
+            <div class="actions">
+                <button type="submit" class="btn btn-danger">Confirmer l’annulation</button>
+                <a class="btn btn-secondary" href="{{ path('app_rencontre_show', {id: rencontre.id}) }}">Conserver la rencontre</a>
+            </div>
+        </form>
+    </section>
+{% endblock %}

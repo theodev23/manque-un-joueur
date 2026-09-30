@@ -24,7 +24,9 @@ class RencontreRepository extends ServiceEntityRepository
     {
         $queryBuilder = $this->createQueryBuilder('r')
             ->andWhere('r.dateHeure > :maintenant')
+            ->andWhere('r.annulee = :annulee')
             ->setParameter('maintenant', new \DateTimeImmutable('now', new \DateTimeZone('UTC')))
+            ->setParameter('annulee', false)
             ->orderBy('r.dateHeure', 'ASC');
 
         $ville = trim($ville);
