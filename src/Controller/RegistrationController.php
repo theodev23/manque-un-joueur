@@ -26,7 +26,7 @@ class RegistrationController extends AbstractController
             // $form->get('plainPassword')->getData() récupère le mot de passe en clair saisi par l’utilisateur.
             $plainPassword = $form->get('plainPassword')->getData();
 
-            // hashPassword() chiffre le mot de passe en clair et le stocke dans l’objet User.
+            // hashPassword() hache le mot de passe en clair et le stocke dans l’objet User.
             $user->setPassword($userPasswordHasher->hashPassword($user, $plainPassword));
 
             // persist() indique à Doctrine que ce nouvel objet doit être enregistré en base de données.
