@@ -51,6 +51,20 @@ symfony server:start
 
 Ouvrir ensuite l’adresse indiquée dans le terminal. Créer un compte depuis la page d’inscription pour organiser une première rencontre.
 
+## Données de démonstration
+
+Pour créer des comptes fictifs, des rencontres et des participations :
+
+```bash
+php bin/console doctrine:fixtures:load --env=dev
+```
+
+Attention : cette commande supprime les données existantes de la base de développement avant de charger les données fictives.
+
+Les comptes `alex@example.com`, `sam@example.com` et `camille@example.com` utilisent le mot de passe `DemoFoot2026!`.
+
+Les données sont définies dans `src/DataFixtures/AppFixtures.php` et peuvent être modifiées. Les dates des rencontres sont calculées à chaque chargement.
+
 ## Tests
 
 Les tests utilisent une base séparée : `manque_un_joueur_test`.
