@@ -402,6 +402,111 @@ final class RencontreControllerTest extends WebTestCase
         }
     }
 
+    public function testUnJoueurNePeutPasAnnulerLaParticipationDUnAutre(): void
+    {
+        $client = static::createClient();
+
+        $this->verifierBaseDeTest();
+
+        $organisateur = $this->creerUtilisateur('Organisateur test');
+        $proprietaire = $this->creerUtilisateur('Joueur inscrit');
+        $autreJoueur = $this->creerUtilisateur('Autre joueur');
+
+        $rencontre = $this->creerRencontre(
+            $organisateur,
+            'Protection de l’annulation des participations'
+        );
+
+        $participation = $this->creerParticipation(
+            $proprietaire,
+            $rencontre,
+            Participation::STATUT_ACCEPTEE
+        );
+
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->flush();
+
+        $rencontreId = $rencontre->getId();
+        $participationId = $participation->getId();
+        $proprietaireId = $proprietaire->getId();
+
+        $utilisateurIds = [
+            $organisateur->getId(),
+            $proprietaireId,
+            $autreJoueur->getId(),
+        ];
+
+        try {
+            // Récupérer le véritable formulaire d’annulation du propriétaire.
+            $client->loginUser($proprietaire, 'main');
+            $crawler = $client->request('GET', '/rencontre/' . $rencontreId);
+
+            self::assertResponseIsSuccessful();
+
+            $formulaire = $crawler
+                ->selectButton('Annuler ma participation')
+                ->form();
+
+            // Changer d’utilisateur dans le même navigateur de test.
+            // Même avec ce formulaire, un autre joueur doit être refusé.
+            $client->loginUser($autreJoueur, 'main');
+            $client->submit($formulaire);
+
+            self::assertResponseStatusCodeSame(403);
+
+            // La tentative interdite ne doit pas modifier la participation.
+            $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+            $entityManager->clear();
+
+            $participationEnBase = $entityManager->find(
+                Participation::class,
+                $participationId
+            );
+
+            self::assertNotNull($participationEnBase);
+            self::assertSame(
+                Participation::STATUT_ACCEPTEE,
+                $participationEnBase->getStatut()
+            );
+            self::assertSame(
+                $proprietaireId,
+                $participationEnBase->getUtilisateur()->getId()
+            );
+
+            // Le propriétaire peut soumettre ce même formulaire.
+            $proprietaire = $entityManager->find(User::class, $proprietaireId);
+
+            self::assertNotNull($proprietaire);
+
+            $client->loginUser($proprietaire, 'main');
+            $client->submit($formulaire);
+
+            self::assertResponseRedirects('/rencontre/' . $rencontreId);
+
+            $client->followRedirect();
+
+            self::assertResponseIsSuccessful();
+            self::assertSelectorTextContains(
+                '.alert-success',
+                'Votre participation a bien été annulée.'
+            );
+
+            $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+            $entityManager->clear();
+
+            self::assertNull(
+                $entityManager->find(Participation::class, $participationId)
+            );
+        } finally {
+            $this->nettoyerDonnees($rencontreId, $utilisateurIds);
+        }
+    }
+
+
+
+
+
+    // Les méthodes suivantes sont des utilitaires pour créer des entités et nettoyer la base de test.
     private function verifierBaseDeTest(): void
     {
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
