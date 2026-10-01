@@ -9,11 +9,12 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 // Cet attribut indique que Doctrine doit associer cette classe à une table de la base.
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-#[UniqueEntity(fields: ['email'], message: 'There is already an account with this email')]
+#[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec cette adresse e-mail.')]
 // UserInterface permet à Symfony d’obtenir l’identifiant de connexion et les rôles de l’utilisateur.
 // PasswordAuthenticatedUserInterface indique que l’utilisateur possède un mot de passe accessible par getPassword()
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -25,6 +26,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?int $id = null;
 
     #[ORM\Column(length: 180)]
+    #[Assert\NotBlank(message: 'Veuillez renseigner une adresse e-mail.')]
+    #[Assert\Email(message: 'Veuillez saisir une adresse e-mail valide.')]
+    #[Assert\Length(
+        max: 180,
+        maxMessage: 'L’adresse e-mail ne doit pas dépasser {{ limit }} caractères.'
+    )]
     private ?string $email = null;
 
     /**

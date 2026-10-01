@@ -12,6 +12,7 @@ use Symfony\Component\Validator\Constraints\IsTrue;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 
 class RegistrationFormType extends AbstractType
 {
@@ -33,7 +34,7 @@ class RegistrationFormType extends AbstractType
                     ),
                 ],
             ])
-            ->add('email', null, [
+            ->add('email', EmailType::class, [
                 'label' => 'Adresse e-mail',
                 'attr' => ['autocomplete' => 'email'],
             ])
@@ -42,7 +43,7 @@ class RegistrationFormType extends AbstractType
                 'label' => 'J’accepte les conditions d’utilisation',
                 'constraints' => [
                     new IsTrue(
-                        message: 'You should agree to our terms.',
+                        message: 'Veuillez accepter les conditions d’utilisation.',
                     ),
                 ],
             ])
@@ -58,9 +59,9 @@ class RegistrationFormType extends AbstractType
                     ),
                     new Length(
                         min: 6,
-                        minMessage: 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
-                        // max length allowed by Symfony for security reasons
                         max: 4096,
+                        minMessage: 'Votre mot de passe doit contenir au moins {{ limit }} caractères.',
+                        maxMessage: 'Votre mot de passe ne doit pas dépasser {{ limit }} caractères.',
                     ),
                 ],
             ])
