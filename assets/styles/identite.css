@@ -1,0 +1,209 @@
+/* Identité visuelle : chargé après app.css. La police reste disponible hors ligne. */
+@font-face {
+    font-family: 'Montserrat Sport';
+    src: url('/fonts/montserrat-extrabold-italic.woff') format('woff');
+    font-weight: 800;
+    font-style: italic;
+    font-display: swap;
+}
+
+:root {
+    --sport-forest: #163c2d;
+    --sport-green: #176b46;
+    --sport-lime: #c7f36b;
+    --sport-paper: #f8faf4;
+    --sport-font: 'Montserrat Sport', Arial, sans-serif;
+}
+
+body { min-height: 100vh; }
+
+h1, h2, .site-brand-text {
+    font-family: var(--sport-font);
+    font-style: italic;
+    font-weight: 800;
+}
+
+h1 { font-size: clamp(1.8rem, 3.5vw, 2.6rem); }
+
+.site-header { border-bottom: 3px solid var(--sport-lime); }
+.navigation { gap: 18px 28px; padding-block: 16px; }
+.site-brand { display: inline-flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.site-logo { width: 64px; height: 64px; object-fit: contain; }
+.site-brand-text { font-size: 1.12rem; line-height: 1.2; text-transform: uppercase; }
+.site-brand-text > span { color: var(--sport-lime); }
+.site-header .site-brand:hover { text-decoration: none; }
+.navigation-links { gap: 8px 18px; font-size: 0.875rem; }
+.navigation-links > a { padding-block: 7px; border-bottom: 2px solid transparent; }
+.navigation-links > a:hover,
+.navigation-links > a[aria-current="page"] {
+    color: var(--sport-lime);
+    border-bottom-color: var(--sport-lime);
+    text-decoration: none;
+}
+.navigation-user { max-width: 160px; font-size: 0.8125rem; }
+.navigation-links > .navigation-signup {
+    padding: 9px 14px;
+    color: var(--sport-forest);
+    background: var(--sport-lime);
+    border: 2px solid var(--sport-lime);
+    border-radius: 7px;
+    font-weight: bold;
+}
+.navigation-links > .navigation-signup:hover,
+.navigation-links > .navigation-signup[aria-current="page"] {
+    color: var(--sport-forest);
+    background: #daf8a1;
+    border-color: #daf8a1;
+}
+.navigation-links > .navigation-signup[aria-current="page"] { text-decoration: underline; }
+
+/* Le lien apparaît au clavier et permet de passer directement au contenu. */
+.skip-link {
+    position: absolute;
+    left: 16px;
+    top: -100px;
+    z-index: 10;
+    padding: 12px 18px;
+    color: var(--sport-forest);
+    background: #fff;
+    border-radius: 6px;
+}
+.skip-link:focus { top: 12px; }
+
+/* Accueil : l’accroche porte l’identité sportive, le texte reste facile à lire. */
+.home-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+    align-items: center;
+    gap: 28px;
+    padding: clamp(26px, 4vw, 48px);
+    color: #f8faf4;
+    background: linear-gradient(120deg, #163c2d, #20543e);
+    border-color: #32684e;
+    border-radius: 18px;
+}
+.home-copy { min-width: 0; }
+.home-eyebrow {
+    margin-bottom: 18px;
+    color: var(--sport-lime);
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+.home-intro h1 {
+    margin-bottom: 22px;
+    color: #fff;
+    font-size: clamp(2rem, 3.8vw, 3rem);
+    line-height: 1.12;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+}
+.home-intro h1 > span { color: var(--sport-lime); }
+.home-description { max-width: 58ch; color: #e1ede4; font-size: 1.0625rem; }
+.home-intro .btn:not(.btn-secondary) {
+    color: var(--sport-forest);
+    background: var(--sport-lime);
+    border-color: var(--sport-lime);
+}
+.home-intro .btn:not(.btn-secondary):hover { background: #daf8a1; border-color: #daf8a1; }
+.home-intro .btn-secondary { color: #fff; background: transparent; border-color: #b0c9b9; }
+.home-intro .btn-secondary:hover { background: #2b6048; border-color: #fff; }
+.home-intro .btn:focus-visible { outline-color: #fff; }
+.home-account-link { color: #d7e7dc; font-size: 0.875rem; }
+.home-account-link a { color: #fff; }
+.home-account-link a:focus-visible { outline-color: var(--sport-lime); }
+.home-emblem { display: grid; justify-items: center; gap: 18px; text-align: center; }
+.home-emblem img { display: block; width: 100%; max-width: 250px; height: auto; }
+.home-emblem span { max-width: 24ch; color: #d7e7dc; font-size: 0.875rem; }
+
+/* Éléments communs : boutons, cartes, formulaires et informations pratiques. */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 44px;
+    border-radius: 8px;
+    transition: background-color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+.card, .form-panel, .detail-panel, .search-form, .empty-state { border-radius: 14px; }
+.card { border-top: 4px solid #8ab69b; }
+.card h2, .card h3 {
+    font-family: Arial, Helvetica, sans-serif;
+    font-style: normal;
+    font-weight: bold;
+    line-height: 1.3;
+}
+.card h2 a, .card h3 a { text-decoration: none; }
+.card h2 a:hover, .card h3 a:hover { text-decoration: underline; }
+.meeting-card { transition: box-shadow 150ms ease, border-color 150ms ease; }
+.meeting-card:hover, .meeting-card:focus-within {
+    border-top-color: var(--sport-green);
+    box-shadow: 0 8px 24px rgba(16, 50, 35, 0.15);
+}
+.card-details { width: 100%; }
+.card-details p { display: flex; align-items: flex-start; gap: 9px; }
+.card-details .icon { margin-top: 3px; color: var(--sport-green); }
+.icon { display: inline-block; width: 20px; height: 20px; flex-shrink: 0; vertical-align: middle; }
+.badge { display: inline-flex; align-items: center; gap: 7px; }
+.badge .icon { width: 17px; height: 17px; }
+.badge-available { background: #e4f3d4; }
+.step-number {
+    width: 42px;
+    height: 42px;
+    color: var(--sport-forest);
+    background: var(--sport-lime);
+    font-size: 1.125rem;
+    border-radius: 10px;
+}
+.home-steps h2 { margin-bottom: 22px; }
+.steps-list .card { border-top-color: var(--sport-lime); }
+.steps-list h3 { margin-block: 18px 12px; }
+.form-panel { border-top: 4px solid var(--sport-green); }
+.search-form { border-left: 4px solid var(--sport-green); }
+
+/* Les titres et les actions restent lisibles sur le fond de stade. */
+.page-heading {
+    padding: 24px;
+    background: var(--sport-paper);
+    border: 1px solid #dce5df;
+    border-left: 4px solid var(--sport-green);
+    border-radius: 14px;
+}
+.page-heading h1 { overflow-wrap: anywhere; }
+.home-steps > h2, .dashboard-section > h2 {
+    width: fit-content;
+    max-width: 100%;
+    padding: 10px 16px;
+    color: var(--sport-forest);
+    background: var(--sport-paper);
+    border-radius: 8px;
+}
+.dashboard-section > p { padding: 12px 16px; background: var(--sport-paper); border-radius: 8px; }
+
+@media (max-width: 1050px) {
+    .navigation { align-items: flex-start; }
+    .navigation-links { flex-basis: 100%; }
+    .home-intro { grid-template-columns: minmax(0, 1fr) 180px; }
+}
+
+@media (max-width: 700px) {
+    .navigation { flex-direction: column; gap: 14px; }
+    .navigation-links { flex-direction: row; align-items: center; gap: 8px 16px; width: 100%; }
+    .navigation-user { max-width: 100%; }
+    .site-logo { width: 54px; height: 54px; }
+    .site-brand-text { font-size: 1rem; }
+    .home-intro { grid-template-columns: 1fr; padding: 28px 24px; }
+    .home-intro h1 { font-size: clamp(1.75rem, 6.5vw, 2.7rem); }
+    .home-emblem { display: none; }
+    .home-description { font-size: 1rem; }
+    .home-steps > h2 { font-size: clamp(1.2rem, 5.4vw, 1.5rem); }
+    .home-intro .actions { align-items: stretch; }
+    .home-intro .actions .btn { width: 100%; }
+    .page-heading { padding: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn, .meeting-card { transition: none; }
+}

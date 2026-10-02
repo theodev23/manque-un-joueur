@@ -1,35 +1,43 @@
 {% extends 'base.html.twig' %}
+{% import 'components/_icons.html.twig' as icons %}
 
 {% block title %}Il nous manque un joueur{% endblock %}
 
 {% block body %}
-    <section class="home-intro">
-        <h1>Un joueur en moins ? Le match peut quand même avoir lieu.</h1>
+    <section class="home-intro" aria-labelledby="home-title">
+        <div class="home-copy">
+            <p class="home-eyebrow">Le football se joue ensemble</p>
+            <h1 id="home-title">Il manque un joueur ?<br><span>À vous d’entrer en jeu.</span></h1>
 
-        <p class="home-description">
-            Une équipe incomplète ou simplement envie de jouer ?
-            Organisez une rencontre de football ou proposez votre participation à un match près de chez vous.
-        </p>
+            <p class="home-description">
+                Une équipe incomplète ou simplement envie de jouer ?
+                Organisez une rencontre de football ou proposez votre participation à un match près de chez vous.
+            </p>
 
-        <div class="actions">
-            <a class="btn" href="{{ path('app_rencontre') }}">Trouver une rencontre</a>
+            <div class="actions">
+                <a class="btn" href="{{ path('app_rencontre') }}">Trouver une rencontre {{ icons.icon('arrow') }}</a>
+
+                {% if app.user %}
+                    <a class="btn btn-secondary" href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
+                {% else %}
+                    <a class="btn btn-secondary" href="{{ path('app_register') }}">Créer un compte</a>
+                {% endif %}
+            </div>
 
             {% if app.user %}
-                <a class="btn btn-secondary" href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
+                <p class="home-account-link">
+                    <a href="{{ path('app_espace_personnel') }}">Retrouver mes rencontres et mes demandes</a>
+                </p>
             {% else %}
-                <a class="btn btn-secondary" href="{{ path('app_register') }}">Créer un compte</a>
+                <p class="home-account-link">
+                    Déjà inscrit ? <a href="{{ path('app_login') }}">Se connecter</a>
+                </p>
             {% endif %}
         </div>
-
-        {% if app.user %}
-            <p class="home-account-link">
-                <a href="{{ path('app_espace_personnel') }}">Retrouver mes rencontres et mes demandes</a>
-            </p>
-        {% else %}
-            <p class="home-account-link">
-                Déjà inscrit ? <a href="{{ path('app_login') }}">Se connecter</a>
-            </p>
-        {% endif %}
+        <div class="home-emblem" aria-hidden="true">
+            <img src="{{ asset('images/logo-maillot.png') }}" alt="" width="300" height="300">
+            <span>La prochaine place est peut-être la vôtre.</span>
+        </div>
     </section>
 
     <section class="home-steps">

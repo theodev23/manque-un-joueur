@@ -4,7 +4,7 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>{% block title %}Il nous manque un joueur{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
+        <link rel="icon" type="image/png" href="{{ asset('images/logo-maillot.png') }}">
         {% block stylesheets %}
         {% endblock %}
 
@@ -20,28 +20,33 @@
         {% endif %}
     </head>
     <body>
+        {% set routeActuelle = app.request.attributes.get('_route') %}
+        <a class="skip-link" href="#contenu">Aller au contenu</a>
         <header class="site-header">
             <nav class="navigation container" aria-label="Navigation principale">
-                <a class="site-brand" href="{{ path('app_home') }}">Il nous manque un joueur</a>
+                <a class="site-brand" href="{{ path('app_home') }}">
+                    <img class="site-logo" src="{{ asset('images/logo-maillot.png') }}" alt="" width="64" height="64">
+                    <span class="site-brand-text">Il nous manque<br><span>un joueur</span></span>
+                </a>
 
                 <div class="navigation-links">
-                    <a href="{{ path('app_home') }}">Accueil</a>
-                    <a href="{{ path('app_rencontre') }}">Rencontres</a>
+                    <a href="{{ path('app_home') }}"{% if routeActuelle == 'app_home' %} aria-current="page"{% endif %}>Accueil</a>
+                    <a href="{{ path('app_rencontre') }}"{% if routeActuelle == 'app_rencontre' %} aria-current="page"{% endif %}>Rencontres</a>
 
                     {% if app.user %}
-                        <a href="{{ path('app_rencontre_new') }}">Organiser une rencontre</a>
-                        <a href="{{ path('app_espace_personnel') }}">Mon espace</a>
+                        <a href="{{ path('app_rencontre_new') }}"{% if routeActuelle == 'app_rencontre_new' %} aria-current="page"{% endif %}>Organiser une rencontre</a>
+                        <a href="{{ path('app_espace_personnel') }}"{% if routeActuelle == 'app_espace_personnel' %} aria-current="page"{% endif %}>Mon espace</a>
                         <span class="navigation-user">Connecté : {{ app.user.pseudo }}</span>
-                        <a href="{{ logout_path() }}">Se déconnecter</a>
+                        <a class="navigation-account" href="{{ logout_path() }}">Se déconnecter</a>
                     {% else %}
-                        <a href="{{ path('app_register') }}">Créer un compte</a>
-                        <a href="{{ path('app_login') }}">Se connecter</a>
+                        <a class="navigation-signup" href="{{ path('app_register') }}"{% if routeActuelle == 'app_register' %} aria-current="page"{% endif %}>Créer un compte</a>
+                        <a href="{{ path('app_login') }}"{% if routeActuelle == 'app_login' %} aria-current="page"{% endif %}>Se connecter</a>
                     {% endif %}
                 </div>
             </nav>
         </header>
 
-        <main class="container page-content">
+        <main id="contenu" class="container page-content" tabindex="-1">
             {% block body %}{% endblock %}
         </main>
     </body>
