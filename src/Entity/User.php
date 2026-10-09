@@ -13,6 +13,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 // Cet attribut indique que Doctrine doit associer cette classe à une table de la base.
 #[ORM\Entity(repositoryClass: UserRepository::class)]
+// Cet attribut indique que la colonne email doit être unique dans la table.
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
 #[UniqueEntity(fields: ['email'], message: 'Un compte existe déjà avec cette adresse e-mail.')]
 // UserInterface permet à Symfony d’obtenir l’identifiant de connexion et les rôles de l’utilisateur.
@@ -22,6 +23,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Id : cette propriété est la clé primaire.
     #[ORM\Id]
     #[ORM\GeneratedValue]
+    // #[ORM\Column] indique que cette propriété est mappée à une colonne de la table. Le type de la colonne est automatiquement déduit du type de la propriété.
     #[ORM\Column]
     private ?int $id = null;
 
@@ -52,13 +54,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Rencontre>
      */
-    // mappedBy: 'organisateur' : indique que la relation est portée par la propriété organisateur de Rencontre
+
+    // targetEntity: Rencontre::class : indique que la relation porte sur l’entité Rencontre
+    // mappedBy: 'organisateur' : indique que la relation est mappée par la propriété organisateur de l’entité Rencontre. C’est donc la propriété organisateur qui est propriétaire de la relation.
     #[ORM\OneToMany(targetEntity: Rencontre::class, mappedBy: 'organisateur')]
     private Collection $rencontresOrganisees;
 
     /**
      * @var Collection<int, Participation>
      */
+
+    // targetEntity: Participation::class : indique que la relation porte sur l’entité Participation
+    // mappedBy: 'utilisateur' : indique que la relation est mappée par la propriété utilisateur de l’entité Participation. C’est donc la propriété utilisateur qui est propriétaire de la
     #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'utilisateur')]
     private Collection $participations;
 
@@ -73,7 +80,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
-    // Attention : ?string autorise null dans l’objet PHP, mais ne rend pas automatiquement la colonne nullable en base. Pour cela, il faudrait #[ORM\Column(nullable: true)].
+    // ?string autorise null dans l’objet PHP, mais ne rend pas automatiquement la colonne nullable en base. Pour cela, il faudrait #[ORM\Column(nullable: true)].
     public function getEmail(): ?string
     {
         return $this->email;
@@ -173,6 +180,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // La méthode d’ajout met à jour les deux côtés en mémoire
     public function addRencontresOrganisee(Rencontre $rencontresOrganisee): static
     {
+        // Vérifie si la rencontre n’est pas déjà dans la collection
         if (!$this->rencontresOrganisees->contains($rencontresOrganisee)) {
             $this->rencontresOrganisees->add($rencontresOrganisee);
             $rencontresOrganisee->setOrganisateur($this);
@@ -183,13 +191,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removeRencontresOrganisee(Rencontre $rencontresOrganisee): static
     {
+        // Vérifie si la rencontre est dans la collection et la supprime
         if ($this->rencontresOrganisees->removeElement($rencontresOrganisee)) {
-            // set the owning side to null (unless already changed)
+            // Met à jour le côté inverse de la relation si nécessaire
             if ($rencontresOrganisee->getOrganisateur() === $this) {
                 $rencontresOrganisee->setOrganisateur(null);
             }
         }
-
         return $this;
     }
 
@@ -214,7 +222,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeParticipation(Participation $participation): static
     {
         if ($this->participations->removeElement($participation)) {
-            // set the owning side to null (unless already changed)
             if ($participation->getUtilisateur() === $this) {
                 $participation->setUtilisateur(null);
             }

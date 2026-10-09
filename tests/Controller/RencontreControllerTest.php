@@ -11,56 +11,72 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 final class RencontreControllerTest extends WebTestCase
 {
+    // Le test ci-dessous vérifie que les visiteurs non connectés sont redirigés vers la page de connexion lorsqu'ils tentent d'accéder à la page de création d'une rencontre.
     public function testUnVisiteurDoitSeConnecterPourOrganiserUneRencontre(): void
     {
+        // Crée un client HTTP pour simuler un navigateur.
         $client = static::createClient();
 
+        // Tente d'accéder à la page de création d'une rencontre sans être connecté.
         $client->request('GET', '/rencontre/nouvelle');
 
+        // Vérifie que la réponse est une redirection vers la page de connexion.
         self::assertResponseRedirects('/login');
 
+        // La redirection doit être suivie pour vérifier que la page de connexion s'affiche correctement.
         $client->followRedirect();
 
+        // Vérifie que la page de connexion s'affiche correctement et que les champs de formulaire pour le nom d'utilisateur et le mot de passe sont présents.
         self::assertResponseIsSuccessful();
         self::assertSelectorExists('input[name="_username"]');
         self::assertSelectorExists('input[name="_password"]');
     }
 
+    // Le test ci-dessous vérifie qu'un utilisateur ne puisse pas modifier la rencontre organisée par un autre utilisateur.
     public function testUnUtilisateurNePeutPasModifierLaRencontreDUnAutre(): void
     {
+        // Crée un client HTTP pour simuler un navigateur.
         $client = static::createClient();
 
+        // Vérifie que le test s'exécute bien sur la base de données de test.
         $this->verifierBaseDeTest();
 
+        // Crée deux utilisateurs : un organisateur et un autre joueur.
         $organisateur = $this->creerUtilisateur('Organisateur test');
         $autreUtilisateur = $this->creerUtilisateur('Joueur test');
 
+        // Crée une rencontre organisée par l'organisateur.
         $rencontre = $this->creerRencontre(
             $organisateur,
             'Rencontre pour le test des autorisations'
         );
 
+        // Enregistre les entités créées en base de données.
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
         $entityManager->flush();
 
+        // Récupère les identifiants des entités pour les utiliser dans le test et pour le nettoyage des données après le test.
         $rencontreId = $rencontre->getId();
         $organisateurId = $organisateur->getId();
         $autreUtilisateurId = $autreUtilisateur->getId();
 
         try {
-            // Un autre joueur ne peut pas modifier la rencontre.
+            // L’autre utilisateur tente d’accéder au formulaire de modification de la rencontre organisée par l’organisateur.
             $client->loginUser($autreUtilisateur, 'main');
             $client->request('GET', '/rencontre/' . $rencontreId . '/modifier');
 
+            // Vérifie que la réponse est un code 403 Forbidden, ce qui signifie que l’accès est refusé.
             self::assertResponseStatusCodeSame(403);
 
-            // L’organisateur peut accéder au formulaire de modification.
+            // L’organisateur peut accéder au formulaire de modification de sa propre rencontre.
             $client->loginUser($organisateur, 'main');
             $client->request('GET', '/rencontre/' . $rencontreId . '/modifier');
 
+            // Vérifie que la réponse est réussie et que le formulaire de modification de la rencontre est présent.
             self::assertResponseIsSuccessful();
             self::assertSelectorExists('form[name="rencontre"]');
         } finally {
+            // Nettoie les données créées pour le test afin de ne pas laisser de traces dans la base de données.
             $this->nettoyerDonnees(
                 $rencontreId,
                 [$organisateurId, $autreUtilisateurId]
@@ -68,23 +84,30 @@ final class RencontreControllerTest extends WebTestCase
         }
     }
 
+    // Le test ci-dessous vérifie que lorsqu'une rencontre est annulée pendant qu'un joueur a ouvert le formulaire de participation, la soumission de ce formulaire après l'annulation ne crée pas de participation.
     public function testUneRencontreAnnuleeRefuseUneNouvelleParticipation(): void
     {
+        // Crée un client HTTP pour simuler un navigateur.
         $client = static::createClient();
 
+        // Vérifie que le test s'exécute bien sur la base de données de test.
         $this->verifierBaseDeTest();
 
+        // Crée un organisateur et un joueur pour le test.
         $organisateur = $this->creerUtilisateur('Organisateur test');
         $joueur = $this->creerUtilisateur('Joueur test');
 
+        // Crée une rencontre organisée par l'organisateur.
         $rencontre = $this->creerRencontre(
             $organisateur,
             'Rencontre annulée pendant une inscription'
         );
 
+        // Enregistre les entités créées en base de données.
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
         $entityManager->flush();
 
+        // Récupère les identifiants des entités pour les utiliser dans le test et pour le nettoyage des données après le test.
         $rencontreId = $rencontre->getId();
         $organisateurId = $organisateur->getId();
         $joueurId = $joueur->getId();
@@ -94,19 +117,22 @@ final class RencontreControllerTest extends WebTestCase
             $client->loginUser($joueur, 'main');
             $crawler = $client->request('GET', '/rencontre/' . $rencontreId);
 
+            // Vérifie que la page s’affiche correctement.
             self::assertResponseIsSuccessful();
 
-            // Conserver le formulaire, comme dans un onglet resté ouvert.
+            // Récupère le formulaire de participation avant l’annulation.
             $formulaire = $crawler
                 ->selectButton('Demander à participer')
                 ->form();
 
-            // Annuler ensuite la rencontre en base.
+            // L’organisateur annule la rencontre.
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $rencontreEnBase = $entityManager->find(Rencontre::class, $rencontreId);
 
+            // Vérifie que la rencontre existe en base de données avant de l’annuler.
             self::assertNotNull($rencontreEnBase);
 
+            // Annule la rencontre et enregistre le changement en base de données.
             $rencontreEnBase->annuler();
             $entityManager->flush();
             $entityManager->clear();
@@ -114,20 +140,24 @@ final class RencontreControllerTest extends WebTestCase
             // Le joueur soumet le formulaire obtenu avant l’annulation.
             $client->submit($formulaire);
 
+            // Vérifie que la réponse est une redirection vers la page de la rencontre, ce qui signifie que la participation n’a pas été enregistrée.
             self::assertResponseRedirects('/rencontre/' . $rencontreId);
 
+            // Suivre la redirection pour vérifier que la page de la rencontre s’affiche correctement et que le message d’annulation est présent.
             $client->followRedirect();
 
+            // Vérifie que la page s’affiche correctement et que le message d’erreur indiquant que la rencontre est annulée est présent.
             self::assertResponseIsSuccessful();
             self::assertSelectorTextContains(
                 '.alert-danger',
                 'Cette rencontre est annulée.'
             );
 
-            // Aucune participation ne doit avoir été enregistrée.
+            // Vérifie qu’aucune participation n’a été enregistrée pour cette rencontre.
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $entityManager->clear();
 
+            // Vérifie que le nombre de participations pour cette rencontre est bien de 0, ce qui confirme qu’aucune participation n’a été créée après l’annulation.
             self::assertSame(
                 0,
                 $entityManager->getRepository(Participation::class)->count([
@@ -135,6 +165,7 @@ final class RencontreControllerTest extends WebTestCase
                 ])
             );
         } finally {
+            // Nettoie les données créées pour le test afin de ne pas laisser de traces dans la base de données.
             $this->nettoyerDonnees(
                 $rencontreId,
                 [$organisateurId, $joueurId]
@@ -142,24 +173,30 @@ final class RencontreControllerTest extends WebTestCase
         }
     }
 
+    // Le test ci-dessous vérifie que lorsqu'une rencontre n'a qu'une seule place disponible, une seule demande de participation peut être acceptée.
     public function testUneSeuleDemandePeutEtreAccepteePourLaDernierePlace(): void
     {
+        // Crée un client HTTP pour simuler un navigateur.
         $client = static::createClient();
 
+        // Vérifie que le test s'exécute bien sur la base de données de test.
         $this->verifierBaseDeTest();
 
+        // Crée un organisateur et deux joueurs pour le test.
         $utilisateurs = [
             'organisateur' => $this->creerUtilisateur('Organisateur test'),
             'joueur1' => $this->creerUtilisateur('Joueur 1'),
             'joueur2' => $this->creerUtilisateur('Joueur 2'),
         ];
 
+        // Crée une rencontre avec une seule place disponible.
         $rencontre = $this->creerRencontre(
             $utilisateurs['organisateur'],
             'Deux demandes pour une seule place',
             1
         );
 
+        // Crée deux demandes de participation pour la rencontre.
         $premiereDemande = $this->creerParticipation(
             $utilisateurs['joueur1'],
             $rencontre
@@ -170,25 +207,30 @@ final class RencontreControllerTest extends WebTestCase
             $rencontre
         );
 
+        // Enregistre les entités créées en base de données.
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
         $entityManager->flush();
 
+        // Récupère les identifiants des entités pour les utiliser dans le test et pour le nettoyage des données après le test.
         $rencontreId = $rencontre->getId();
         $premiereDemandeId = $premiereDemande->getId();
         $secondeDemandeId = $secondeDemande->getId();
 
+        // Récupère les identifiants des utilisateurs pour le nettoyage des données après le test.
         $utilisateurIds = array_map(
             static fn (User $utilisateur): int => $utilisateur->getId(),
             $utilisateurs
         );
 
         try {
+            // L’organisateur se connecte et tente d’accepter les deux demandes de participation.
             $client->loginUser($utilisateurs['organisateur'], 'main');
             $crawler = $client->request('GET', '/rencontre/' . $rencontreId);
 
+            // Vérifie que la page s’affiche correctement.
             self::assertResponseIsSuccessful();
 
-            // Récupérer les deux formulaires avant la première acceptation.
+            // Récupère les formulaires d’acceptation pour les deux demandes de participation.
             $premierFormulaire = $crawler
                 ->filter('form[action="/participation/' . $premiereDemandeId . '/accepter"]')
                 ->selectButton('Accepter')
@@ -199,24 +241,29 @@ final class RencontreControllerTest extends WebTestCase
                 ->selectButton('Accepter')
                 ->form();
 
-            // La première demande prend la dernière place.
+            // L’organisateur soumet le formulaire pour accepter la première demande.
             $client->submit($premierFormulaire);
 
+            // Vérifie que la réponse est une redirection vers la page de la rencontre
             self::assertResponseRedirects('/rencontre/' . $rencontreId);
 
+            // Suivre la redirection pour vérifier que la page de la rencontre s’affiche correctement et que le message de succès est présent.
             $client->followRedirect();
 
+            // Vérifie que la page s’affiche correctement et que le message de succès indiquant que la demande a été acceptée est présent.
             self::assertResponseIsSuccessful();
             self::assertSelectorTextContains(
                 '.alert-success',
                 'La demande a été acceptée.'
             );
 
-            // La seconde acceptation doit être bloquée côté serveur.
+            // L’organisateur soumet le formulaire pour accepter la deuxième demande.
             $client->submit($secondFormulaire);
 
+            // Vérifie que la réponse est une redirection vers la page de la rencontre.
             self::assertResponseRedirects('/rencontre/' . $rencontreId);
 
+            // Suivre la redirection pour vérifier que la page de la rencontre s’affiche correctement et que le message d’erreur est présent.
             $client->followRedirect();
 
             self::assertResponseIsSuccessful();
@@ -225,7 +272,7 @@ final class RencontreControllerTest extends WebTestCase
                 'Cette rencontre est complète.'
             );
 
-            // Vérifier les statuts réellement enregistrés.
+            // Vérifie que la première demande a été acceptée et que la deuxième demande est toujours en attente, et que la rencontre n’a plus de places disponibles.
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $entityManager->clear();
 
@@ -250,6 +297,7 @@ final class RencontreControllerTest extends WebTestCase
                 $secondeDemande->getStatut()
             );
 
+            // Vérifie qu’il n’y a qu’une seule participation acceptée pour cette rencontre.
             self::assertSame(
                 1,
                 $entityManager->getRepository(Participation::class)->count([
@@ -258,122 +306,149 @@ final class RencontreControllerTest extends WebTestCase
                 ])
             );
 
+            // Vérifie que la rencontre n’a plus de places disponibles.
             $rencontreEnBase = $entityManager->find(Rencontre::class, $rencontreId);
 
+            // Vérifie que la rencontre existe en base de données.
             self::assertNotNull($rencontreEnBase);
             self::assertSame(0, $rencontreEnBase->getPlacesRestantes());
         } finally {
+            // Nettoie les données créées pour le test afin de ne pas laisser de traces dans la base de données.
             $this->nettoyerDonnees($rencontreId, $utilisateurIds);
         }
     }
 
+    // Le test ci-dessous vérifie que lorsqu’un joueur annule sa participation acceptée, une place est libérée et l’organisateur peut accepter une autre demande en attente.
     public function testAnnulerUneParticipationAccepteeLibereUnePlace(): void
     {
+        // Crée un client HTTP pour simuler un navigateur.
         $client = static::createClient();
 
+        // Vérifie que le test s'exécute bien sur la base de données de test.
         $this->verifierBaseDeTest();
 
+        // Crée un organisateur et deux joueurs pour le test.
         $utilisateurs = [
             'organisateur' => $this->creerUtilisateur('Organisateur test'),
             'joueur1' => $this->creerUtilisateur('Joueur 1'),
             'joueur2' => $this->creerUtilisateur('Joueur 2'),
         ];
 
+        // Crée une rencontre avec une seule place disponible.
         $rencontre = $this->creerRencontre(
             $utilisateurs['organisateur'],
             'Une place libérée après une annulation',
             1
         );
 
-        // Le premier joueur occupe la seule place.
+        // Le premier joueur a déjà une participation acceptée.
         $participationAcceptee = $this->creerParticipation(
             $utilisateurs['joueur1'],
             $rencontre,
             Participation::STATUT_ACCEPTEE
         );
 
-        // Le deuxième joueur attend une réponse.
+        // Le deuxième joueur a une demande de participation en attente.
         $demandeEnAttente = $this->creerParticipation(
             $utilisateurs['joueur2'],
             $rencontre
         );
 
+        // Enregistre les entités créées en base de données.    
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
         $entityManager->flush();
 
+        // Récupère les identifiants des entités pour les utiliser dans le test et pour le nettoyage des données après le test.
         $rencontreId = $rencontre->getId();
         $participationAccepteeId = $participationAcceptee->getId();
         $demandeEnAttenteId = $demandeEnAttente->getId();
         $organisateurId = $utilisateurs['organisateur']->getId();
 
+        // Récupère les identifiants des utilisateurs pour le nettoyage des données après le test.
         $utilisateurIds = array_map(
             static fn (User $utilisateur): int => $utilisateur->getId(),
             $utilisateurs
         );
 
         try {
-            // Le premier joueur annule sa participation.
+            // Le premier joueur annule sa participation acceptée.
             $client->loginUser($utilisateurs['joueur1'], 'main');
             $client->request('GET', '/rencontre/' . $rencontreId);
 
+            // Vérifie que la page s’affiche correctement.
             self::assertResponseIsSuccessful();
 
+            // Soumet le formulaire d’annulation de la participation.
             $client->submitForm('Annuler ma participation');
 
+            // Vérifie que la réponse est une redirection vers la page de la rencontre.
             self::assertResponseRedirects('/rencontre/' . $rencontreId);
 
             $client->followRedirect();
 
+            // Vérifie que la page s’affiche correctement et que le message de succès indiquant que la participation a été annulée est présent.
             self::assertResponseIsSuccessful();
             self::assertSelectorTextContains(
                 '.alert-success',
                 'Votre participation a bien été annulée.'
             );
 
-            // Vérifier la suppression et la place libérée.
+            // Vérifie que la participation du premier joueur a été supprimée et que la rencontre a une place disponible.
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $entityManager->clear();
 
+            // Vérifie que la participation du premier joueur n’existe plus en base de données.
             self::assertNull(
                 $entityManager->find(Participation::class, $participationAccepteeId)
             );
 
+            // Vérifie que la rencontre a une place disponible après l’annulation.
             $rencontreEnBase = $entityManager->find(Rencontre::class, $rencontreId);
 
+            // Vérifie que la rencontre existe en base de données.
             self::assertNotNull($rencontreEnBase);
             self::assertSame(1, $rencontreEnBase->getPlacesRestantes());
 
-            // L’organisateur peut maintenant accepter le deuxième joueur.
+            // L’organisateur accepte la demande de participation en attente du deuxième joueur.
             $organisateur = $entityManager->find(User::class, $organisateurId);
 
+            // Vérifie que l’organisateur existe en base de données.
             self::assertNotNull($organisateur);
 
+            // L’organisateur se connecte et accède à la page de la rencontre.
             $client->loginUser($organisateur, 'main');
             $crawler = $client->request('GET', '/rencontre/' . $rencontreId);
 
+            // Vérifie que la page s’affiche correctement.
             self::assertResponseIsSuccessful();
 
+            // Récupère le formulaire d’acceptation de la demande de participation en attente du deuxième joueur.
             $formulaire = $crawler
                 ->filter('form[action="/participation/' . $demandeEnAttenteId . '/accepter"]')
                 ->selectButton('Accepter')
                 ->form();
 
+            // Soumet le formulaire pour accepter la demande de participation en attente.
             $client->submit($formulaire);
 
+            // Vérifie que la réponse est une redirection vers la page de la rencontre.
             self::assertResponseRedirects('/rencontre/' . $rencontreId);
 
+            // Suivre la redirection pour vérifier que la page de la rencontre s’affiche correctement et que le message de succès est présent.
             $client->followRedirect();
 
+            // Vérifie que la page s’affiche correctement et que le message de succès indiquant que la demande a été acceptée est présent.
             self::assertResponseIsSuccessful();
             self::assertSelectorTextContains(
                 '.alert-success',
                 'La demande a été acceptée.'
             );
 
-            // Le deuxième joueur occupe désormais la place.
+            // Vérifie que la demande de participation en attente du deuxième joueur a été acceptée et que la rencontre n’a plus de places disponibles.
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $entityManager->clear();
 
+            
             $demandeEnBase = $entityManager->find(
                 Participation::class,
                 $demandeEnAttenteId
@@ -390,6 +465,7 @@ final class RencontreControllerTest extends WebTestCase
             self::assertNotNull($rencontreEnBase);
             self::assertSame(0, $rencontreEnBase->getPlacesRestantes());
 
+            // Vérifie qu’il n’y a qu’une seule participation acceptée pour cette rencontre.
             self::assertSame(
                 1,
                 $entityManager->getRepository(Participation::class)->count([
@@ -398,38 +474,49 @@ final class RencontreControllerTest extends WebTestCase
                 ])
             );
         } finally {
+            // Nettoie les données créées pour le test afin de ne pas laisser de traces dans la base de données.
             $this->nettoyerDonnees($rencontreId, $utilisateurIds);
         }
     }
 
+
+    // Le test ci-dessous vérifie qu’un joueur ne peut pas annuler la participation d’un autre joueur.
     public function testUnJoueurNePeutPasAnnulerLaParticipationDUnAutre(): void
     {
+        // Crée un client HTTP pour simuler un navigateur.
         $client = static::createClient();
 
+        // Vérifie que le test s'exécute bien sur la base de données de test.
         $this->verifierBaseDeTest();
 
+        // Crée un organisateur, un joueur propriétaire de la participation et un autre joueur pour le test.
         $organisateur = $this->creerUtilisateur('Organisateur test');
         $proprietaire = $this->creerUtilisateur('Joueur inscrit');
         $autreJoueur = $this->creerUtilisateur('Autre joueur');
 
+        // Crée une rencontre organisée par l’organisateur.
         $rencontre = $this->creerRencontre(
             $organisateur,
             'Protection de l’annulation des participations'
         );
 
+        // Crée une participation acceptée pour le joueur propriétaire.
         $participation = $this->creerParticipation(
             $proprietaire,
             $rencontre,
             Participation::STATUT_ACCEPTEE
         );
 
+        // Enregistre les entités créées en base de données.
         $entityManager = static::getContainer()->get(EntityManagerInterface::class);
         $entityManager->flush();
 
+        // Récupère les identifiants des entités pour les utiliser dans le test et pour le nettoyage des données après le test.
         $rencontreId = $rencontre->getId();
         $participationId = $participation->getId();
         $proprietaireId = $proprietaire->getId();
 
+        // Récupère les identifiants des utilisateurs pour le nettoyage des données après le test.
         $utilisateurIds = [
             $organisateur->getId(),
             $proprietaireId,
@@ -437,24 +524,26 @@ final class RencontreControllerTest extends WebTestCase
         ];
 
         try {
-            // Récupérer le véritable formulaire d’annulation du propriétaire.
+            // Le joueur propriétaire de la participation se connecte et accède à la page de la rencontre.
             $client->loginUser($proprietaire, 'main');
             $crawler = $client->request('GET', '/rencontre/' . $rencontreId);
 
+            // Vérifie que la page s’affiche correctement.
             self::assertResponseIsSuccessful();
 
+            // Récupère le formulaire d’annulation de la participation.
             $formulaire = $crawler
                 ->selectButton('Annuler ma participation')
                 ->form();
 
-            // Changer d’utilisateur dans le même navigateur de test.
-            // Même avec ce formulaire, un autre joueur doit être refusé.
+            // L’autre joueur tente de soumettre le formulaire d’annulation de la participation du joueur propriétaire.
             $client->loginUser($autreJoueur, 'main');
             $client->submit($formulaire);
 
+            // Vérifie que la réponse est un code 403 Forbidden, ce qui signifie que l’accès est refusé.
             self::assertResponseStatusCodeSame(403);
 
-            // La tentative interdite ne doit pas modifier la participation.
+            // Vérifie que la participation du joueur propriétaire est toujours présente et que son statut est toujours accepté.
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $entityManager->clear();
 
@@ -463,6 +552,7 @@ final class RencontreControllerTest extends WebTestCase
                 $participationId
             );
 
+            // Vérifie que la participation existe en base de données.
             self::assertNotNull($participationEnBase);
             self::assertSame(
                 Participation::STATUT_ACCEPTEE,
@@ -473,24 +563,29 @@ final class RencontreControllerTest extends WebTestCase
                 $participationEnBase->getUtilisateur()->getId()
             );
 
-            // Le propriétaire peut soumettre ce même formulaire.
+            // Le joueur propriétaire de la participation se connecte à nouveau et soumet le formulaire d’annulation de sa participation.
             $proprietaire = $entityManager->find(User::class, $proprietaireId);
 
+            // Vérifie que le joueur propriétaire existe en base de données.
             self::assertNotNull($proprietaire);
 
+            // Le joueur propriétaire soumet le formulaire d’annulation de sa participation.
             $client->loginUser($proprietaire, 'main');
             $client->submit($formulaire);
 
+            // Vérifie que la réponse est une redirection vers la page de la rencontre.
             self::assertResponseRedirects('/rencontre/' . $rencontreId);
 
             $client->followRedirect();
 
+            // Vérifie que la page s’affiche correctement et que le message de succès indiquant que la participation a été annulée est présent.
             self::assertResponseIsSuccessful();
             self::assertSelectorTextContains(
                 '.alert-success',
                 'Votre participation a bien été annulée.'
             );
 
+            // Vérifie que la participation du joueur propriétaire a été supprimée.
             $entityManager = static::getContainer()->get(EntityManagerInterface::class);
             $entityManager->clear();
 
@@ -498,9 +593,165 @@ final class RencontreControllerTest extends WebTestCase
                 $entityManager->find(Participation::class, $participationId)
             );
         } finally {
+            // Nettoie les données créées pour le test afin de ne pas laisser de traces dans la base de données.
             $this->nettoyerDonnees($rencontreId, $utilisateurIds);
         }
     }
+
+
+    public function testAnnulationNotifieUniquementLesParticipantsAcceptesSansDoublon(): void
+    {
+        // Crée un client HTTP pour simuler un navigateur.
+        $client = static::createClient();
+        $this->verifierBaseDeTest();
+
+        // Crée un organisateur et trois joueurs avec différents statuts de participation.
+        $utilisateurs = [
+            'organisateur' => $this->creerUtilisateur('Organisateur test'),
+            'accepte' => $this->creerUtilisateur('Joueur accepté'),
+            'enAttente' => $this->creerUtilisateur('Joueur en attente'),
+            'refuse' => $this->creerUtilisateur('Joueur refusé'),
+        ];
+
+        // Crée une rencontre organisée par l’organisateur.
+        $rencontre = $this->creerRencontre(
+            $utilisateurs['organisateur'],
+            'Rencontre pour le test des e-mails'
+        );
+
+        // Crée des participations avec différents statuts pour les joueurs.
+        $this->creerParticipation(
+            $utilisateurs['accepte'],
+            $rencontre,
+            Participation::STATUT_ACCEPTEE
+        );
+
+        $this->creerParticipation(
+            $utilisateurs['enAttente'],
+            $rencontre,
+            Participation::STATUT_EN_ATTENTE
+        );
+
+        $this->creerParticipation(
+            $utilisateurs['refuse'],
+            $rencontre,
+            Participation::STATUT_REFUSEE
+        );
+
+        // Enregistre les entités créées en base de données.
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->flush();
+
+        // Récupère les identifiants des entités pour les utiliser dans le test et pour le nettoyage des données après le test.
+        $rencontreId = $rencontre->getId();
+        $emailJoueurAccepte = $utilisateurs['accepte']->getEmail();
+
+        $utilisateurIds = [];
+        foreach ($utilisateurs as $cle => $utilisateur) {
+            $utilisateurIds[$cle] = $utilisateur->getId();
+        }
+
+        try {
+            // L’organisateur se connecte et annule la rencontre.
+            $client->loginUser($utilisateurs['organisateur'], 'main');
+
+            $crawler = $client->request(
+                'GET',
+                '/rencontre/' . $rencontreId . '/annuler'
+            );
+
+            // Vérifie que la page s’affiche correctement.
+            self::assertResponseIsSuccessful();
+            // Vérifie qu’aucun e-mail n’a été envoyé avant l’annulation.
+            self::assertEmailCount(0);
+
+            // Récupère le formulaire d’annulation de la rencontre.
+            $formulaire = $crawler
+                ->filter('form[action="/rencontre/' . $rencontreId . '/annuler"]')
+                ->form();
+
+            // Première soumission : la rencontre est annulée.
+            $client->submit($formulaire);
+
+            // Vérifie que la réponse est une redirection vers la page de la rencontre.
+            self::assertResponseRedirects('/rencontre/' . $rencontreId);
+
+            // Vérifie qu’un seul e-mail a été envoyé à la suite de l’annulation.
+            self::assertEmailCount(1);
+
+            // Récupère le message e-mail envoyé.
+            $email = self::getMailerMessage();
+
+            // Vérifie que le message est bien une instance de l’e-mail Symfony.
+            self::assertInstanceOf(\Symfony\Component\Mime\Email::class, $email);
+
+            // Vérifie que l’e-mail a été envoyé uniquement au joueur accepté et qu’il n’y a pas de doublons.
+            self::assertCount(1, $email->getTo());
+            self::assertSame(
+                $emailJoueurAccepte,
+                $email->getTo()[0]->getAddress()
+            );
+            
+            // Vérifie qu’il n’y a pas de destinataires en copie (Cc) ou en copie cachée (Bcc).
+            self::assertCount(0, $email->getCc());
+            self::assertCount(0, $email->getBcc());
+
+            // Vérifie le sujet et le corps de l’e-mail.
+            self::assertEmailSubjectContains(
+                $email,
+                'Annulation de votre rencontre'
+            );
+            self::assertEmailHtmlBodyContains(
+                $email,
+                'Rencontre pour le test des e-mails'
+            );
+
+            
+            // Vérifie que la rencontre est bien marquée comme annulée en base de données.
+            $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+            $entityManager->clear();
+
+            // Récupère la rencontre en base de données.
+            $rencontreEnBase = $entityManager->find(Rencontre::class, $rencontreId);
+
+            // Vérifie que la rencontre existe en base de données.
+            self::assertNotNull($rencontreEnBase);
+            // Vérifie que la rencontre est bien annulée.
+            self::assertTrue($rencontreEnBase->isAnnulee());
+
+            $client->followRedirect();
+
+            // Vérifie que la page s’affiche correctement et que le message de succès indiquant que la rencontre a été annulée est présent.
+            self::assertResponseIsSuccessful();
+            self::assertSelectorTextContains(
+                '.alert-success',
+                'La rencontre a bien été annulée.'
+            );
+
+            // Rejoue le même formulaire pour simuler une deuxième tentative.
+            $client->submit($formulaire);
+
+            self::assertResponseRedirects('/rencontre/' . $rencontreId);
+
+            // Cette deuxième requête ne doit produire aucun nouvel e-mail.
+            self::assertEmailCount(0);
+
+            $client->followRedirect();
+
+            // Vérifie que la page s’affiche correctement et que le message d’erreur indiquant que la rencontre est déjà annulée est présent.
+            self::assertResponseIsSuccessful();
+            self::assertSelectorTextContains(
+                '.alert-danger',
+                'Cette rencontre est déjà annulée.'
+            );
+        } finally {
+            $this->nettoyerDonnees($rencontreId, $utilisateurIds);
+        }
+    }
+
+
+
+
 
 
 

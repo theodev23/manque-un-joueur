@@ -5,6 +5,7 @@ namespace App\Entity;
 use App\Repository\ParticipationRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+// L’entité Participation représente la participation d’un utilisateur à une rencontre. Elle contient des informations sur le statut de la participation (en attente, acceptée ou refusée), la date de la demande, l’utilisateur et la rencontre associée.
 #[ORM\Entity(repositoryClass: ParticipationRepository::class)]
 // Cette contrainte porte sur le couple utilisateur–rencontre : un joueur peut participer à plusieurs rencontres, mais ne peut posséder qu’une seule participation pour chacune.
 #[ORM\UniqueConstraint(name: 'UNIQ_PARTICIPATION_UTILISATEUR_RENCONTRE', fields: ['utilisateur', 'rencontre'])]
@@ -25,10 +26,16 @@ class Participation
     #[ORM\Column]
     private ?\DateTimeImmutable $dateDemande;
 
+    // La relation ManyToOne indique que plusieurs participations peuvent être associées à un même utilisateur. 
+    // L’attribut inversedBy indique le nom de la propriété correspondante dans l’entité User. 
+    // JoinColumn(nullable: false) indique que la colonne de jointure ne peut pas être nulle, donc chaque participation doit avoir un utilisateur.
     #[ORM\ManyToOne(inversedBy: 'participations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $utilisateur = null;
 
+    // La relation ManyToOne indique que plusieurs participations peuvent être associées à une même rencontre.
+    // L’attribut inversedBy indique le nom de la propriété correspondante dans l’entité Rencontre. 
+    // JoinColumn(nullable: false) indique que la colonne de jointure ne peut pas être nulle, donc chaque participation doit avoir une rencontre.
     #[ORM\ManyToOne(inversedBy: 'participations')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Rencontre $rencontre = null;

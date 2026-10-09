@@ -48,8 +48,7 @@ class RegistrationFormType extends AbstractType
                 ],
             ])
             ->add('plainPassword', PasswordType::class, [
-                                // instead of being set onto the object directly,
-                // this is read and encoded in the controller
+                // mapped à false car le texte saisi n’est pas enregistré directement dans User. Le contrôleur le récupère, le hache, puis affecte le résultat à password.
                 'mapped' => false,
                 'label' => 'Mot de passe',
                 'attr' => ['autocomplete' => 'new-password'],

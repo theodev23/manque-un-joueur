@@ -12,7 +12,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ORM\Entity(repositoryClass: RencontreRepository::class)]
 class Rencontre
 {
-    // Les attributs ORM décrivent le stockage. Les attributs Assert définissent les règles vérifiées par le validateur Symfony, notamment lorsque nous appellerons $form->isValid().
+    // Les attributs ORM décrivent le stockage. 
+    // Les attributs Assert définissent les règles vérifiées par le validateur Symfony, notamment lorsque nous appellerons $form->isValid().
 
 
     #[ORM\Id]
@@ -59,10 +60,12 @@ class Rencontre
     #[Assert\Positive(message: 'Le nombre de places doit être supérieur à zéro.')]
     private ?int $placesRecherchees = null;
 
+    // Le type TEXT est utilisé pour les textes longs. La propriété description peut être nulle.
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
 
     // inversedBy: 'rencontresOrganisees' : indique le nom de la propriété correspondante dans User
+    // JoinColumn(nullable: false) : indique que la colonne de jointure ne peut pas être nulle, donc chaque rencontre doit avoir un organisateur.
     #[ORM\ManyToOne(inversedBy: 'rencontresOrganisees')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $organisateur = null;
@@ -70,9 +73,13 @@ class Rencontre
     /**
      * @var Collection<int, Participation>
      */
+
+    // targetEntity: Participation::class : indique que la relation porte sur l’entité Participation
+    // mappedBy: 'rencontre' : indique que la relation est mappée par la propriété rencontre de l’entité Participation. C’est donc la propriété rencontre qui est propriétaire de la relation.
     #[ORM\OneToMany(targetEntity: Participation::class, mappedBy: 'rencontre')]
     private Collection $participations;
 
+    // La propriété annulee est un booléen qui indique si la rencontre est annulée ou non. La valeur par défaut est false.
     #[ORM\Column(options: ['default' => false])]
     private bool $annulee = false;
 

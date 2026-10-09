@@ -3,6 +3,7 @@
 {% block title %}{{ rencontre.titre }} — Il nous manque un joueur{% endblock %}
 
 {% block body %}
+
     {% set placesRestantes = rencontre.placesRestantes %}
     {% set estOrganisateur = app.user and app.user.id == rencontre.organisateur.id %}
 
@@ -54,7 +55,7 @@
 
             {% if not rencontre.annulee %}
                 <div>
-                    <dt>Places restantes</dt>
+                    <dt>Place(s) restante(s)</dt>
                     <dd>{{ placesRestantes }} sur {{ rencontre.placesRecherchees }}</dd>
                 </div>
             {% endif %}

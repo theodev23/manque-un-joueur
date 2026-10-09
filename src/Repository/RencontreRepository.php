@@ -6,9 +6,8 @@ use App\Entity\Rencontre;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
-/**
- * @extends ServiceEntityRepository<Rencontre>
- */
+// RencontreRepository est un dépôt de données pour l’entité Rencontre. Il fournit des méthodes pour interagir avec la base de données, comme findRencontresAVenir() qui récupère les rencontres à venir, éventuellement filtrées par ville.
+// Cette classe hérite de ServiceEntityRepository, qui fournit des méthodes de base pour interagir avec la base de données, comme find(), findAll(), findBy(), etc.
 class RencontreRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -41,27 +40,4 @@ class RencontreRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
-
-
-//    public function findByExampleField($value): array
-//    {
-//        return $this->createQueryBuilder('r')
-//            ->andWhere('r.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->orderBy('r.id', 'ASC')
-//            ->setMaxResults(10)
-//            ->getQuery()
-//            ->getResult()
-//        ;
-//    }
-
-//    public function findOneBySomeField($value): ?Rencontre
-//    {
-//        return $this->createQueryBuilder('r')
-//            ->andWhere('r.exampleField = :val')
-//            ->setParameter('val', $value)
-//            ->getQuery()
-//            ->getOneOrNullResult()
-//        ;
-//    }
 }

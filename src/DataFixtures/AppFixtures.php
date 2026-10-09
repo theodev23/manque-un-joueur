@@ -18,12 +18,14 @@ final class AppFixtures extends Fixture
 
     public function load(ObjectManager $manager): void
     {
-        // Comptes fictifs destinés à la démonstration locale.
+        // Comptes fictifs
         $utilisateurs = [];
 
         foreach ([
             'alex' => 'Alex',
             'sam' => 'Sam',
+            'codein' => 'Codein',
+            'theo' => 'Théo',
             'camille' => 'Camille',
         ] as $identifiant => $pseudo) {
             $utilisateur = new User();
@@ -32,7 +34,7 @@ final class AppFixtures extends Fixture
             $utilisateur->setPassword(
                 $this->passwordHasher->hashPassword(
                     $utilisateur,
-                    'DemoFoot2026!'
+                    'test1234'
                 )
             );
 
@@ -48,13 +50,13 @@ final class AppFixtures extends Fixture
 
         $donneesRencontres = [
             'montpellier' => [
-                'titre' => 'Foot entre amis à Montpellier',
+                'titre' => 'Foot entre collègues à Montpellier',
                 'ville' => 'Montpellier',
-                'lieu' => 'Stade de la Mosson',
+                'lieu' => '6 rue de Maguelone, 34000 Montpellier',
                 'jours' => '+3 days',
-                'places' => 3,
-                'organisateur' => 'alex',
-                'description' => 'Match amical, tous niveaux bienvenus. Rendez-vous quinze minutes avant le début.',
+                'places' => 2,
+                'organisateur' => 'codein',
+                'description' => 'Match réservé aux membres de Codéin .',
                 'annulee' => false,
             ],
             'nimes' => [
@@ -127,7 +129,6 @@ final class AppFixtures extends Fixture
         }
 
         $donneesParticipations = [
-            ['montpellier', 'sam', Participation::STATUT_ACCEPTEE],
             ['montpellier', 'camille', Participation::STATUT_EN_ATTENTE],
             ['nimes', 'alex', Participation::STATUT_ACCEPTEE],
             ['nimes', 'camille', Participation::STATUT_EN_ATTENTE],

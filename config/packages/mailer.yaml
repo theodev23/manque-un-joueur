@@ -1,3 +1,9 @@
 framework:
     mailer:
         dsn: '%env(MAILER_DSN)%'
+        message_bus: false # message_bus false indique à Symfony Mailer d’envoyer directement les messages, sans passer par la file d’attente Messenger. Nous n’aurons donc pas de processus de traitement en arrière-plan à démarrer.
+        
+when@test:
+    framework:
+        mailer:
+            dsn: 'null://null' # Le transport null://null permet de tester les messages produits sans les transmettre à Mailpit ni à un destinataire réel. Symfony fournit les assertions nécessaires pour vérifier leur nombre et leur contenu.

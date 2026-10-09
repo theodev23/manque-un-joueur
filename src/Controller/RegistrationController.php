@@ -11,6 +11,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
+// Cette classe gère l’inscription des utilisateurs. Elle contient une méthode register(...) qui crée un formulaire d’inscription, le traite et enregistre l’utilisateur en base de données si le formulaire est valide.
 class RegistrationController extends AbstractController
 {
     #[Route('/register', name: 'app_register')]
@@ -23,7 +24,7 @@ class RegistrationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // $form->get('plainPassword')->getData() récupère le mot de passe en clair saisi par l’utilisateur.
+            // On récupère le mot de passe en clair saisi par l’utilisateur.
             $plainPassword = $form->get('plainPassword')->getData();
 
             // hashPassword() hache le mot de passe en clair et le stocke dans l’objet User.

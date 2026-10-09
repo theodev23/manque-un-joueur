@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rencontre annulée</title>
+</head>
+<body>
+    <h1>Votre rencontre a été annulée</h1>
+
+    <p>Bonjour {{ joueur.pseudo }},</p>
+
+    <p>
+        L’organisateur a annulé la rencontre
+        « {{ rencontre.titre }} », à laquelle vous deviez participer.
+    </p>
+
+    <ul>
+        <li>
+            Date :
+            {{ rencontre.dateHeure|date('d/m/Y à H:i', 'Europe/Paris') }}
+            — heure de Paris
+        </li>
+        <li>Ville : {{ rencontre.ville }}</li>
+        <li>Lieu : {{ rencontre.lieu }}</li>
+    </ul>
+
+    <p>Cette rencontre n’aura donc pas lieu.</p>
+
+    <p>Vous pouvez toujours observer les rencontres disponibles afin de participer à un autre match. Nous vous remercions de votre compréhension. </p>
+</body>
+</html>
