@@ -13,6 +13,7 @@ Plus précisément, un utilisateur peut publier une rencontre en précisant le l
 - Annulation de sa participation.
 - Espace personnel pour retrouver ses rencontres et ses demandes.
 - Notification par e-mail des participants acceptés lorsque l’organisateur annule une rencontre.
+- API publique en lecture seule pour consulter les rencontres au format JSON.
 
 L’application vérifie également les droits des utilisateurs et les places disponibles. Les inscriptions sont fermées lorsque la rencontre a commencé ou a été annulée.
 
@@ -97,6 +98,24 @@ Les comptes `alex@example.com`, `sam@example.com` et `camille@example.com` utili
 
 Les données sont définies dans `src/DataFixtures/AppFixtures.php` et peuvent être modifiées. Les dates des rencontres sont calculées à chaque chargement.
 
+## API
+
+L’application propose une API publique en lecture seule. Les réponses sont au format JSON.
+
+| Méthode      | Route |             Description |
+|-----|-------------------|-----------------------------------------|
+| GET | `/api/rencontres` | Liste les rencontres à venir et non annulées. |
+| GET | `/api/rencontres?ville=Montpellier` | Filtre cette liste par ville. |
+| GET | `/api/rencontres/{id}` | Affiche le détail d’une rencontre. |
+
+La route `/api/rencontres` affiche uniquement les rencontres à venir et non annulées. Le paramètre `ville` permet de filtrer cette liste.
+
+La route `/api/rencontres/{id}` permet de consulter une rencontre précise grâce à son identifiant, même si elle est passée ou annulée. Par exemple, une rencontre annulée disparaît de la liste, mais son détail reste accessible avec `"annulee": true`. Si aucune rencontre ne correspond à l’identifiant demandé, l’API renvoie une erreur au format JSON avec le statut HTTP 404.
+
+L’API renvoie les informations de la rencontre et le pseudo de son organisateur. Elle ne transmet ni l’adresse e-mail ni le mot de passe de l’organisateur, ni la liste des participations.
+
+Pour une liste, les résultats sont regroupés dans un tableau nommé `rencontres`. Si aucune rencontre ne correspond à la recherche, ce tableau est vide : `{"rencontres":[]}`. Pour le détail, les informations de la rencontre sont regroupées dans un objet nommé `rencontre`.
+
 ## Tests
 
 Les tests utilisent une base séparée : `manque_un_joueur_test`.
@@ -116,9 +135,9 @@ Puis lancer les tests :
 php bin/phpunit
 ```
 
-Les neuf tests fonctionnels comprennent 114 assertions. Ils couvrent notamment les droits d’accès, les places disponibles, l’annulation des participations et l’inscription des utilisateurs.
+Les dix tests fonctionnels comprennent 141 assertions. Ils couvrent notamment les droits d’accès, les places disponibles, l’annulation des participations et l’inscription des utilisateurs.
 
-Ils vérifient également que l’annulation d’une rencontre notifie uniquement les participants acceptés et qu’une deuxième tentative d’annulation ne renvoie pas les e-mails.
+Ils vérifient également les notifications d’annulation et l’API : liste des rencontres, filtre par ville, informations publiques du détail et réponse 404 pour une rencontre inexistante.
 
 Pendant les tests, le transport `null://null`, configuré dans `config/packages/mailer.yaml`, permet de vérifier les messages générés sans envoyer de véritables e-mails. Mailpit n’a donc pas besoin d’être démarré pour lancer les tests.
 

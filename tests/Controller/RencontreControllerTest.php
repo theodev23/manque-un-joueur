@@ -750,8 +750,242 @@ final class RencontreControllerTest extends WebTestCase
     }
 
 
+    // Le test ci-dessous vérifie que l’API REST pour les rencontres fonctionne correctement, en particulier la liste des rencontres et le détail d’une rencontre.
+    public function testApiRencontres(): void
+    {
+        // Crée un client HTTP pour simuler un navigateur.
+        $client = static::createClient();
+        $this->verifierBaseDeTest();
 
+        // Crée un organisateur pour les rencontres.
+        $organisateur = $this->creerUtilisateur('Organisateur API');
 
+        // Des villes uniques évitent les interférences avec d’autres données.
+        $suffixe = bin2hex(random_bytes(6));
+        $ville = 'Ville API ' . $suffixe;
+        $autreVille = 'Autre ville API ' . $suffixe;
+
+        // Crée plusieurs rencontres avec différents statuts et villes.
+        $rencontreAVenir = $this->creerRencontre(
+            $organisateur,
+            'Rencontre API à venir'
+        );
+        $rencontreAVenir->setVille($ville);
+
+        $rencontreAutreVille = $this->creerRencontre(
+            $organisateur,
+            'Rencontre API dans une autre ville'
+        );
+        $rencontreAutreVille->setVille($autreVille);
+
+        $rencontrePassee = $this->creerRencontre(
+            $organisateur,
+            'Rencontre API passée'
+        );
+        $rencontrePassee->setVille($ville);
+        $rencontrePassee->setDateHeure(
+            new \DateTimeImmutable('-2 days', new \DateTimeZone('UTC'))
+        );
+
+        $rencontreAnnulee = $this->creerRencontre(
+            $organisateur,
+            'Rencontre API annulée'
+        );
+        $rencontreAnnulee->setVille($ville);
+        $rencontreAnnulee->annuler();
+
+        // Enregistre les entités créées en base de données.
+        $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+        $entityManager->flush();
+
+        // Récupère les identifiants des entités pour les utiliser dans le test et pour le nettoyage des données après le test.
+        $organisateurId = $organisateur->getId();
+        $idAVenir = $rencontreAVenir->getId();
+        $idAutreVille = $rencontreAutreVille->getId();
+        $idPassee = $rencontrePassee->getId();
+        $idAnnulee = $rencontreAnnulee->getId();
+
+        // Liste des rencontres à supprimer après le test.
+        $rencontreIds = [
+            $idAVenir,
+            $idAutreVille,
+            $idPassee,
+            $idAnnulee,
+        ];
+
+        try {
+            // 1. La liste est accessible sans connexion et renvoie du JSON.
+            $client->request('GET', '/api/rencontres');
+
+            // Vérifie que la réponse est un code 200 OK.
+            self::assertResponseStatusCodeSame(200);
+            // Vérifie que le type de contenu de la réponse est bien JSON.
+            self::assertResponseHeaderSame('content-type', 'application/json');
+
+            // Décode le contenu JSON de la réponse en tableau associatif.
+            $donnees = json_decode(
+                $client->getResponse()->getContent(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+
+            // Vérifie que la clé 'rencontres' est présente dans le tableau de données.
+            $idsRetournes = array_column($donnees['rencontres'], 'id');
+
+            // Vérifie que les rencontres à venir et dans une autre ville sont présentes dans la liste, tandis que la rencontre passée et annulée ne le sont pas.
+            self::assertContains($idAVenir, $idsRetournes);
+            self::assertContains($idAutreVille, $idsRetournes);
+            self::assertNotContains($idPassee, $idsRetournes);
+            self::assertNotContains($idAnnulee, $idsRetournes);
+
+            // 2. Le filtre conserve uniquement la rencontre de la ville demandée.
+            $client->request('GET', '/api/rencontres', [
+                'ville' => $ville,
+            ]);
+
+            // Vérifie que la réponse est un code 200 OK.
+            self::assertResponseStatusCodeSame(200);
+
+            // Décode le contenu JSON de la réponse en tableau associatif.
+            $donnees = json_decode(
+                $client->getResponse()->getContent(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+
+            // Vérifie que la liste contient exactement une rencontre correspondant à la ville demandée.
+            self::assertCount(1, $donnees['rencontres']);
+            // Vérifie que l’ID de la rencontre dans la liste correspond à l’ID de la rencontre à venir dans la ville demandée.
+            self::assertSame($idAVenir, $donnees['rencontres'][0]['id']);
+
+            // 3. Une ville sans rencontre donne une liste vide.
+            $client->request('GET', '/api/rencontres', [
+                'ville' => 'Ville absente ' . $suffixe,
+            ]);
+
+            // Vérifie que la réponse est un code 200 OK.
+            self::assertResponseStatusCodeSame(200);
+
+            // Décode le contenu JSON de la réponse en tableau associatif.
+            $donnees = json_decode(
+                $client->getResponse()->getContent(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+
+            // Vérifie que la liste des rencontres est vide pour une ville sans rencontre.
+            self::assertSame(['rencontres' => []], $donnees);
+
+            // 4. Le détail d’une rencontre à venir est accessible et contient les bonnes informations.
+            $client->request('GET', '/api/rencontres/' . $idAVenir);
+
+            // Vérifie que la réponse est un code 200 OK et que le type de contenu est JSON.
+            self::assertResponseStatusCodeSame(200);
+            // Vérifie que le type de contenu de la réponse est bien JSON.
+            self::assertResponseHeaderSame('content-type', 'application/json');
+
+            // Décode le contenu JSON de la réponse en tableau associatif.
+            $donnees = json_decode(
+                $client->getResponse()->getContent(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+
+            // On récupère le tableau situé sous la clé 'rencontre' pour plus de lisibilité.
+            $detail = $donnees['rencontre'];
+
+            // On vérifie que les informations correspondent bien.
+            self::assertSame($idAVenir, $detail['id']);
+            self::assertSame('Rencontre API à venir', $detail['titre']);
+            self::assertSame($ville, $detail['ville']);
+            self::assertSame(3, $detail['placesRestantes']);
+            self::assertFalse($detail['annulee']);
+
+            // Vérifie que l’organisateur est représenté uniquement par son pseudo,
+            // sans autre information comme son adresse e-mail ou son mot de passe.
+            self::assertSame(
+                ['pseudo' => 'Organisateur API'],
+                $detail['organisateur']
+            );
+
+            // L’objectif ici est de vérifier que notre API publique ne renvoie pas la liste des demandes de participation.
+            // Concrètement, cette assertion PHPUnit vérifie que le tableau $detail ne contient pas de clé nommée participations
+            self::assertArrayNotHasKey('participations', $detail);
+
+            // 5. Le détail d’une rencontre annulée reste consultable.
+            $client->request('GET', '/api/rencontres/' . $idAnnulee);
+
+            // Vérifie que l’API accepte la consultation : HTTP 200 signifie « OK ».
+            self::assertResponseStatusCodeSame(200);
+
+            // Convertit le contenu JSON de la réponse en tableau associatif PHP.
+            // Une exception sera déclenchée si le JSON est invalide.
+            $donnees = json_decode(
+                $client->getResponse()->getContent(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+
+            // Vérifie que l’API indique bien que cette rencontre est annulée.
+            self::assertTrue($donnees['rencontre']['annulee']);
+
+            // 6. Supprime une rencontre du test pour obtenir un ID inexistant.
+
+            // Récupère l’EntityManager actuel après les requêtes du navigateur de test.
+            $entityManager = static::getContainer()->get(EntityManagerInterface::class);
+
+            // Détache les entités déjà chargées pour relire la rencontre depuis la base.
+            $entityManager->clear();
+
+            // Recherche la rencontre que nous allons supprimer.
+            $rencontreASupprimer = $entityManager->find(
+                Rencontre::class,
+                $idAVenir
+            );
+
+            // Vérifie qu’elle existe avant de demander sa suppression.
+            self::assertNotNull($rencontreASupprimer);
+
+            // Programme la suppression, puis l’exécute en base avec flush().
+            $entityManager->remove($rencontreASupprimer);
+            $entityManager->flush();
+
+            // Demande le détail de la rencontre qui vient d’être supprimée.
+            $client->request('GET', '/api/rencontres/' . $idAVenir);
+
+            // Vérifie que l’API répond « introuvable » avec le statut HTTP 404.
+            self::assertResponseStatusCodeSame(404);
+            self::assertResponseHeaderSame('content-type', 'application/json');
+
+            $donnees = json_decode(
+                $client->getResponse()->getContent(),
+                true,
+                512,
+                JSON_THROW_ON_ERROR
+            );
+
+            // Vérifie que la réponse contient exactement le message d’erreur attendu.
+            self::assertSame(
+                ['erreur' => 'Cette rencontre n’existe pas.'],
+                $donnees
+            );
+        } finally {
+            // Ce bloc nettoie les données même si une assertion du bloc try échoue.
+
+            // Supprime d’abord les rencontres créées pour ce test.
+            foreach ($rencontreIds as $rencontreId) {
+                $this->nettoyerDonnees($rencontreId, []);
+            }
+
+            // Toutes ses rencontres ayant été supprimées, l’organisateur peut être supprimé.
+            $this->nettoyerDonnees($idAVenir, [$organisateurId]);
+        }
+    }
 
 
 
