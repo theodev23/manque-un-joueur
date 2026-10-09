@@ -12,6 +12,7 @@ Plus précisément, un utilisateur peut publier une rencontre en précisant le l
 - Demandes de participation et gestion des réponses par l’organisateur.
 - Annulation de sa participation.
 - Espace personnel pour retrouver ses rencontres et ses demandes.
+- Notification par e-mail des participants acceptés lorsque l’organisateur annule une rencontre.
 
 L’application vérifie également les droits des utilisateurs et les places disponibles. Les inscriptions sont fermées lorsque la rencontre a commencé ou a été annulée.
 
@@ -20,6 +21,8 @@ L’application vérifie également les droits des utilisateurs et les places di
 - PHP 8.4 et Symfony 7.4
 - Doctrine ORM et MariaDB 10.4
 - Twig et CSS
+- Symfony Mailer pour l’envoi des e-mails
+- Mailpit pour consulter les e-mails en développement
 - PHPUnit pour les tests fonctionnels
 
 ## Installation
@@ -50,6 +53,35 @@ symfony server:start
 ```
 
 Ouvrir ensuite l’adresse indiquée dans le terminal. Créer un compte depuis la page d’inscription pour organiser une première rencontre.
+
+## E-mails en développement
+
+Mailpit permet de consulter les e-mails envoyés par l’application en local, sans les transmettre à de véritables boîtes mail.
+
+Sur macOS avec Homebrew, installer et démarrer Mailpit :
+
+```bash
+brew install mailpit
+brew services start mailpit
+```
+
+Ajouter cette ligne dans `.env.local` :
+
+```dotenv
+MAILER_DSN=smtp://127.0.0.1:1025
+```
+
+Les e-mails sont consultables à l’adresse :
+
+```text
+http://localhost:8025
+```
+
+Lorsqu’une rencontre est annulée, chaque participant accepté reçoit un e-mail individuel. Les joueurs dont la demande est en attente ou refusée ne sont pas notifiés. Une nouvelle tentative d’annulation d’une rencontre déjà annulée ne déclenche aucun nouvel envoi.
+
+L’envoi est effectué après l’enregistrement de l’annulation. Si un envoi échoue à cause d’une erreur de transport, l’annulation reste enregistrée, l’erreur est journalisée et un message avertit l’organisateur. Il n’y a pas de nouvelle tentative automatique d’envoi.
+
+La logique d’envoi se trouve dans `src/Service/NotificationRencontreService.php` et le contenu de l’e-mail dans `templates/emails/rencontre_annulee.html.twig`.
 
 ## Données de démonstration
 
@@ -84,7 +116,11 @@ Puis lancer les tests :
 php bin/phpunit
 ```
 
-Les huit tests fonctionnels couvrent notamment les droits d’accès, les places disponibles, l’annulation des participations et l’inscription des utilisateurs.
+Les neuf tests fonctionnels comprennent 114 assertions. Ils couvrent notamment les droits d’accès, les places disponibles, l’annulation des participations et l’inscription des utilisateurs.
+
+Ils vérifient également que l’annulation d’une rencontre notifie uniquement les participants acceptés et qu’une deuxième tentative d’annulation ne renvoie pas les e-mails.
+
+Pendant les tests, le transport `null://null`, configuré dans `config/packages/mailer.yaml`, permet de vérifier les messages générés sans envoyer de véritables e-mails. Mailpit n’a donc pas besoin d’être démarré pour lancer les tests.
 
 ## Auteur
 
